@@ -42,9 +42,13 @@ export function DropdownMenuAvatar({ img_url }: { img_url: string | undefined })
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <LogOutIcon /><SignOutButton>Sign out</SignOutButton>
-          {/* Sign Out */}
+        <DropdownMenuItem asChild>
+          <SignOutButton className="w-full">
+            <button className="flex w-full items-center gap-2">
+              <LogOutIcon />
+              Sign out
+            </button>
+          </SignOutButton>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
