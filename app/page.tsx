@@ -3,7 +3,7 @@ import Navbar from "@/components/navbar";
 export default function Home() {
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
-
+ 
       <main className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-16 sm:px-6 lg:px-8">
         <section className="grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-6">
