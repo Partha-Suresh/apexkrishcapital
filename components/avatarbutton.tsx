@@ -22,8 +22,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { SignOutButton } from "@clerk/nextjs"
+import {useClerk} from "@clerk/nextjs"
 
 export function DropdownMenuAvatar({ img_url }: { img_url: string | undefined }) {
+  const { signOut } = useClerk()
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -43,12 +46,10 @@ export function DropdownMenuAvatar({ img_url }: { img_url: string | undefined })
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <SignOutButton className="w-full">
-            <button className="flex w-full items-center gap-2">
-              <LogOutIcon />
-              Sign out
-            </button>
-          </SignOutButton>
+          <button className="flex w-full items-center gap-2" onClick={() => signOut({redirectUrl: "/"})}>
+            <LogOutIcon />
+            Sign out
+          </button>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
