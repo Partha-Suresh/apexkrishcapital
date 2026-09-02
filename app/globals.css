@@ -126,5 +126,45 @@
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
   }
+}
+
+/* idle.space bespoke glassmorphism & visual depth */
+.idle-glass {
+  background: rgba(245, 245, 248, 0.65);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 0.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0px 10px 40px -10px rgba(10, 10, 10, 0.08);
+}
+
+.idle-glass-dark {
+  background: rgba(18, 18, 20, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0px 16px 40px -10px rgba(0, 0, 0, 0.35);
+}
+
+.idle-card {
+  background: #ffffff;
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0px 10px 40px -10px rgba(10, 10, 10, 0.06);
+  border-radius: 24px;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.idle-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0px 16px 45px -10px rgba(10, 10, 10, 0.1);
+}
+
+.idle-inner-bevel {
+  box-shadow: inset 0px 0px 14px 0px rgba(255, 255, 255, 0.8);
+}
+
+.idle-inner-bevel-dark {
+  box-shadow: inset 0px 0px 14px 0px rgba(255, 255, 255, 0.08);
 }
