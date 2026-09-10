@@ -34,15 +34,15 @@ export function DropdownMenuAvatar({ img_url }: { img_url: string | undefined })
         <Button
           variant="ghost"
           size="icon"
-          className="rounded-full ring-2 ring-black/5 hover:ring-black/15 transition-all w-9 h-9 p-0 overflow-hidden"
+          className="rounded-full ring-2 ring-foreground/10 hover:ring-foreground/25 transition-all w-9 h-9 p-0 overflow-hidden cursor-pointer"
         >
           <Avatar className="w-9 h-9">
             <AvatarImage
-              src={!img_url ? "/user_icon.webp" : img_url}
+              src={!img_url ? "/usericon.webp" : img_url}
               alt="User"
               className="object-cover"
             />
-            <AvatarFallback className="bg-zinc-200 text-zinc-700 text-xs font-semibold">
+            <AvatarFallback className="bg-muted text-muted-foreground text-xs font-semibold">
               AK
             </AvatarFallback>
           </Avatar>
@@ -50,23 +50,23 @@ export function DropdownMenuAvatar({ img_url }: { img_url: string | undefined })
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-52 rounded-2xl border border-zinc-200/80 bg-white/95 p-1.5 shadow-[0_10px_35px_-5px_rgba(0,0,0,0.12)] backdrop-blur-xl animate-in fade-in-80 zoom-in-95"
+        className="w-52 rounded-2xl border border-border bg-popover/95 text-popover-foreground p-1.5 shadow-md backdrop-blur-xl animate-in fade-in-80 zoom-in-95"
       >
         <DropdownMenuGroup>
-          <DropdownMenuItem asChild className="rounded-xl px-3 py-2 text-sm text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100 cursor-pointer transition-colors">
+          <DropdownMenuItem asChild className="rounded-xl px-3 py-2 text-sm text-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors focus:bg-accent focus:text-accent-foreground">
             <Link href="/profile" className="flex items-center gap-2.5 font-medium">
-              <BadgeCheckIcon className="w-4 h-4 text-zinc-500" />
+              <BadgeCheckIcon className="w-4 h-4 text-muted-foreground" />
               <span>Investor Profile</span>
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
-        <DropdownMenuSeparator className="my-1 bg-zinc-100" />
-        <DropdownMenuItem asChild className="rounded-xl px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer transition-colors">
+        <DropdownMenuSeparator className="my-1 bg-border" />
+        <DropdownMenuItem asChild className="rounded-xl px-3 py-2 text-sm text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer transition-colors focus:bg-destructive/10 focus:text-destructive">
           <button
-            className="flex w-full items-center gap-2.5 font-medium"
+            className="flex w-full items-center gap-2.5 font-medium cursor-pointer"
             onClick={() => signOut({ redirectUrl: "/" })}
           >
-            <LogOutIcon className="w-4 h-4 text-red-500" />
+            <LogOutIcon className="w-4 h-4 text-destructive" />
             <span>Sign Out</span>
           </button>
         </DropdownMenuItem>

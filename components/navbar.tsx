@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import { DropdownMenuAvatar } from "./avatarbutton";
+import DarkModeToggle from "./dark-mode-toggle";
 import { Menu, X, ArrowUpRight } from "lucide-react";
 
 const navItems = [
@@ -21,7 +22,7 @@ export default function Navbar() {
     <>
       {/* Desktop & Tablet Floating Navbar */}
       <header className="fixed top-5 md:top-8 left-0 right-0 z-50 flex justify-center px-4 md:px-6 pointer-events-none">
-        <div className="pointer-events-auto flex w-full max-w-[840px] items-center justify-between rounded-[20px] border border-white/80 bg-[rgba(248,249,250,0.75)] py-2.5 px-5 shadow-[0_10px_35px_-10px_rgba(10,10,10,0.1)] backdrop-blur-[20px] transition-all">
+        <div className="pointer-events-auto flex w-full max-w-[840px] items-center justify-between rounded-[20px] border border-border/70 bg-background/80 py-2.5 px-5 shadow-sm backdrop-blur-xl transition-all">
           {/* Brand */}
           <div className="flex items-center gap-2.5">
             <Link
@@ -37,24 +38,23 @@ export default function Navbar() {
                 className="rounded-md object-contain"
                 priority
               />
-              <span className="text-[14px] font-semibold tracking-tight text-zinc-950">
+              <span className="text-[14px] font-semibold tracking-tight text-foreground">
                 Apex Krish
               </span>
             </Link>
 
-            <span className="flex items-center justify-center px-2 py-0.5 rounded-[4px] bg-black text-white text-[8.5px] font-bold tracking-[0.7px] uppercase font-mono">
+            <span className="flex items-center justify-center px-2 py-0.5 rounded-[4px] bg-primary text-primary-foreground text-[8.5px] font-bold tracking-[0.7px] uppercase font-mono">
               TEST BUILD
             </span>
           </div>
 
-
           {/* Desktop Nav Items */}
-          <nav className="hidden md:flex items-center gap-7 text-[14px] font-[450] text-zinc-500">
+          <nav className="hidden md:flex items-center gap-7 text-[14px] font-[450] text-muted-foreground">
             {navItems.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
-                className="transition-colors hover:text-zinc-950"
+                className="transition-colors hover:text-foreground"
               >
                 {item.label}
               </Link>
@@ -65,40 +65,33 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             {isLoaded ? (
               isSignedIn ? (
-                <div className="flex items-center gap-3">
-                  <Link
-                    href="/profile"
-                    className="hidden sm:inline-flex text-[13px] font-medium text-zinc-600 hover:text-zinc-950 transition-colors"
-                  >
-                    Investor Portal
-                  </Link>
-                  <DropdownMenuAvatar img_url={user?.imageUrl} />
-                </div>
+                <DropdownMenuAvatar img_url={user?.imageUrl} />
               ) : (
                 <div className="flex items-center gap-3">
                   <Link
                     href="/sign-in"
-                    className="hidden sm:inline-flex text-[14px] font-medium text-zinc-600 transition-colors hover:text-zinc-950"
+                    className="hidden sm:inline-flex text-[14px] font-medium text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Log in
                   </Link>
                   <a
-                    href="#join"
-                    className="flex h-9 items-center justify-center rounded-[12px] bg-black px-4 text-[13px] font-medium text-white transition-all hover:bg-zinc-800 active:scale-[0.98] shadow-sm whitespace-nowrap"
+                    href="#waitlist"
+                    className="flex h-9 items-center justify-center rounded-[12px] bg-primary px-4 text-[13px] font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98] shadow-xs whitespace-nowrap"
                   >
                     Join Waitlist
                   </a>
                 </div>
               )
             ) : (
-              <div className="w-9 h-9 rounded-full bg-zinc-200/50 animate-pulse" />
+              <div className="w-9 h-9 rounded-full bg-muted animate-pulse" />
             )}
+            <DarkModeToggle />
 
             {/* Mobile Menu Toggle Button */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="flex md:hidden h-9 w-9 items-center justify-center rounded-[12px] border border-zinc-200/80 bg-white text-zinc-800 transition active:scale-95 shadow-sm"
+              className="flex md:hidden h-9 w-9 items-center justify-center rounded-[12px] border border-border bg-background text-foreground hover:bg-muted transition active:scale-95 shadow-xs"
               aria-label="Toggle navigation menu"
               aria-expanded={mobileMenuOpen}
             >
@@ -111,13 +104,13 @@ export default function Navbar() {
       {/* Mobile Drawer Overlay */}
       {mobileMenuOpen && (
         <div className="fixed inset-x-4 top-20 z-50 md:hidden animate-in fade-in zoom-in-95 duration-200">
-          <div className="rounded-[22px] border border-white/90 bg-white/95 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.18)] backdrop-blur-2xl">
+          <div className="rounded-[22px] border border-border bg-popover/95 text-popover-foreground p-5 shadow-lg backdrop-blur-2xl">
             <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
-                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 font-mono">
+              <div className="flex items-center justify-between pb-3 border-b border-border">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-mono">
                   Navigation
                 </span>
-                <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-900 text-white">
+                <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-primary text-primary-foreground">
                   Apex Krish
                 </span>
               </div>
@@ -127,24 +120,24 @@ export default function Navbar() {
                   key={item.label}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between py-2 text-[15px] font-medium text-zinc-800 hover:text-zinc-950"
+                  className="flex items-center justify-between py-2 text-[15px] font-medium text-foreground hover:text-primary transition-colors"
                 >
                   <span>{item.label}</span>
-                  <ArrowUpRight className="w-4 h-4 text-zinc-400" />
+                  <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
                 </Link>
               ))}
 
-              <div className="my-1 h-[0.5px] w-full bg-zinc-100" />
+              <div className="my-1 h-[0.5px] w-full bg-border" />
 
               {isLoaded && isSignedIn ? (
                 <div className="flex flex-col gap-2 pt-1">
                   <Link
                     href="/profile"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between py-2 text-[15px] font-medium text-zinc-900"
+                    className="flex items-center justify-between py-2 text-[15px] font-medium text-foreground hover:text-primary transition-colors"
                   >
                     <span>My Profile</span>
-                    <ArrowUpRight className="w-4 h-4 text-zinc-400" />
+                    <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
                   </Link>
                 </div>
               ) : (
@@ -152,14 +145,14 @@ export default function Navbar() {
                   <Link
                     href="/sign-in"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex h-11 w-full items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 text-[14px] font-medium text-zinc-800"
+                    className="flex h-11 w-full items-center justify-center rounded-xl border border-border bg-muted/60 text-[14px] font-medium text-foreground hover:bg-muted"
                   >
                     Log In
                   </Link>
                   <a
-                    href="#join"
+                    href="#waitlist"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex h-11 w-full items-center justify-center rounded-xl bg-black text-[14px] font-medium text-white shadow-sm"
+                    className="flex h-11 w-full items-center justify-center rounded-xl bg-primary text-[14px] font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
                   >
                     Join Investor Community
                   </a>

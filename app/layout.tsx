@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/navbar";
+import ThemeProvider from "@/components/theme-provider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={cn(
         "h-full",
         "antialiased",
@@ -40,11 +42,13 @@ export default function RootLayout({
         "font-sans"
       )}
     >
-      <body className="min-h-full flex flex-col bg-[#fbfbfb] text-zinc-900 selection:bg-zinc-900 selection:text-white">
-        <ClerkProvider>
-          <Navbar />
-          {children}
-        </ClerkProvider>
+      <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
+        <ThemeProvider>
+          <ClerkProvider>
+            <Navbar />
+            {children}
+          </ClerkProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
