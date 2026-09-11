@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useState, ChangeEvent } from "react"
+import { createPortal } from "react-dom"
 import Link from "next/link"
 import { useUser } from "@clerk/nextjs"
 import { Check, ArrowLeft, ShieldCheck, AlertCircle, Loader2 } from "lucide-react"
@@ -23,7 +24,22 @@ type Profile = {
 	avatar?: string
 }
 
+type HoveredStatusInfo = {
+	value: string
+	description: string
+	top: number
+	left: number
+	placement: "right" | "left" | "bottom"
+}
+
 const STORAGE_KEY = "myapp:profile"
+
+// Centralized descriptions for accredited investor statuses (placeholders ready to be customized)
+const investorStatusDescriptions: Record<string, string> = {
+	"Accredited investor(1M+)": "Net worth exceeding $1 million, either individually or jointly with a spouse, excluding the value of their primary residence.",
+	"Qualified client(2M+)": "Net worth possessing a net worth exceeding $2.7 million, excluding the value of their primary residence.",
+	"Qualified purchaser(5M+)": "Individuals with an excess of $5 million in investments, or entities with at least $25 million in investments.",
+}
 
 export default function ProfilePage() {
 	const { user, isLoaded: isClerkLoaded } = useUser()
@@ -42,6 +58,65 @@ export default function ProfilePage() {
 	const [saving, setSaving] = useState(false)
 	const [saved, setSaved] = useState(false)
 	const [error, setError] = useState<string | null>(null)
+	const [hoveredStatus, setHoveredStatus] = useState<HoveredStatusInfo | null>(null)
+	const [mounted, setMounted] = useState(false)
+
+	useEffect(() => {
+		setMounted(true)
+	}, [])
+
+	// Dismiss hovering dialog on scroll or resize to prevent misaligned floating dialogs
+	useEffect(() => {
+		if (!hoveredStatus) return
+		const handleDismiss = () => setHoveredStatus(null)
+		window.addEventListener("scroll", handleDismiss, true)
+		window.addEventListener("resize", handleDismiss)
+		return () => {
+			window.removeEventListener("scroll", handleDismiss, true)
+			window.removeEventListener("resize", handleDismiss)
+		}
+	}, [hoveredStatus])
+
+	function handleOptionHover(val: string, element: HTMLElement) {
+		const desc = investorStatusDescriptions[val]
+		if (!desc) {
+			setHoveredStatus(null)
+			return
+		}
+
+		const rect = element.getBoundingClientRect()
+		const margin = 12
+		const dialogWidth = 320
+		const viewportWidth = window.innerWidth
+		const viewportHeight = window.innerHeight
+
+		if (viewportWidth >= 640) {
+			const hasRoomOnLeft = rect.left - margin - dialogWidth >= 0
+			const left = hasRoomOnLeft
+				? rect.left - margin - dialogWidth
+				: rect.right + margin
+			const centerY = rect.top + rect.height / 2
+			const top = Math.max(70, Math.min(viewportHeight - 70, centerY))
+
+			setHoveredStatus({
+				value: val,
+				description: desc,
+				top,
+				left,
+				placement: hasRoomOnLeft ? "left" : "right",
+			})
+		} else {
+			const left = Math.max(margin, Math.min(rect.left, viewportWidth - dialogWidth - margin))
+			const top = rect.bottom + margin
+			setHoveredStatus({
+				value: val,
+				description: desc,
+				top,
+				left,
+				placement: "bottom",
+			})
+		}
+	}
 
 	// Fetch existing profile from MongoDB
 	useEffect(() => {
@@ -303,24 +378,35 @@ export default function ProfilePage() {
 									onValueChange={(val) => {
 										setError(null)
 										setProfile((p) => ({ ...p, investorStatus: val }))
+										setHoveredStatus(null)
+									}}
+									onOpenChange={(open) => {
+										if (!open) setHoveredStatus(null)
 									}}
 								>
 									<SelectTrigger className="w-full">
 										<SelectValue placeholder="Select investor status" />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="Not Accredited">
+										<SelectItem
+											value="Not Accredited"
+											onPointerEnter={() => setHoveredStatus(null)}
+											onFocus={() => setHoveredStatus(null)}
+										>
 											Not Accredited
 										</SelectItem>
-										<SelectItem value="Accredited investor(1M+)">
-											Accredited investor(1M+)
-										</SelectItem>
-										<SelectItem value="Qualified client(2M+)">
-											Qualified client(2M+)
-										</SelectItem>
-										<SelectItem value="Qualified purchaser(5M+)">
-											Qualified purchaser(5M+)
-										</SelectItem>
+										{Object.entries(investorStatusDescriptions).map(([val]) => (
+											<SelectItem
+												key={val}
+												value={val}
+												onPointerEnter={(e) => handleOptionHover(val, e.currentTarget)}
+												onPointerLeave={() => setHoveredStatus(null)}
+												onFocus={(e) => handleOptionHover(val, e.currentTarget)}
+												onBlur={() => setHoveredStatus(null)}
+											>
+												{val}
+											</SelectItem>
+										))}
 									</SelectContent>
 								</Select>
 								<p className="text-[11px] text-muted-foreground mt-1.5 font-mono">
@@ -372,6 +458,30 @@ export default function ProfilePage() {
 					</section>
 				</div>
 			</div>
+
+			{/* Non-clickable hovering description dialog rendered via portal */}
+			{mounted &&
+				hoveredStatus &&
+				createPortal(
+					<div
+						role="tooltip"
+						aria-live="polite"
+						className="pointer-events-none fixed z-[9999] w-72 sm:w-80 rounded-2xl border border-border/80 bg-popover/95 p-3.5 sm:p-4 text-popover-foreground shadow-2xl backdrop-blur-xl animate-in fade-in-0 zoom-in-95 duration-150 ring-1 ring-border/20"
+						style={{
+							top: `${hoveredStatus.top}px`,
+							left: `${hoveredStatus.left}px`,
+							transform: hoveredStatus.placement !== "bottom" ? "translateY(-50%)" : "none",
+						}}
+					>
+						<div className="text-xs font-semibold text-foreground mb-1.5">
+							{hoveredStatus.value}
+						</div>
+						<p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
+							{hoveredStatus.description}
+						</p>
+					</div>,
+					document.body
+				)}
 		</main>
 	)
 }
