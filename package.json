@@ -11,11 +11,13 @@
   "dependencies": {
     "@clerk/nextjs": "^7.8.3",
     "@clerk/ui": "^1.31.0",
+    "@types/nodemailer": "^8.0.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.38.0",
     "mongoose": "^9.9.4",
     "next": "16.3.3",
+    "nodemailer": "^10.0.3",
     "radix-ui": "^1.6.7",
     "react": "19.2.8",
     "react-dom": "19.2.8",

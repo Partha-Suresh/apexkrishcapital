@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import User from "@/models/user.model";
 import { dbConnect } from "@/lib/dbConnect";
+import { sendProfileUpdateNotification } from "@/lib/email";
 
 export async function GET(req: NextRequest) {
   try {
@@ -96,6 +97,15 @@ export async function POST(req: NextRequest) {
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
+
+    try {
+      await sendProfileUpdateNotification({
+        ...updatedUser.toObject(),
+        email: email.toLowerCase().trim(),
+      });
+    } catch (mailError) {
+      console.error("Failed to send profile update email:", mailError);
+    }
 
     return NextResponse.json({
       success: true,
