@@ -1,4 +1,7 @@
-import { CalendarDays, ShieldCheck, UserRound, Users } from 'lucide-react'
+"use client"
+
+import { useEffect, useState } from 'react'
+import { AlertCircle, CalendarDays, Loader2, ShieldCheck, UserRound, Users } from 'lucide-react'
 
 type AdminUser = {
   id: string
@@ -29,7 +32,39 @@ function formatDate(date: string | null) {
   }).format(new Date(date))
 }
 
-const AdminPage = ({ users }: { users: AdminUser[] }) => {
+const AdminPage = () => {
+  const [users, setUsers] = useState<AdminUser[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let isActive = true
+
+    async function loadUsers() {
+      try {
+        const response = await fetch('/api/admin/users', { cache: 'no-store' })
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Unable to load users.')
+        }
+
+        if (isActive) setUsers(data.users)
+      } catch (error) {
+        if (isActive) {
+          setError(error instanceof Error ? error.message : 'Unable to load users.')
+        }
+      } finally {
+        if (isActive) setIsLoading(false)
+      }
+    }
+
+    loadUsers()
+    return () => {
+      isActive = false
+    }
+  }, [])
+
   return (
     <main className="min-h-screen bg-background px-4 pb-20 pt-[120px] text-foreground md:px-6 md:pt-[160px]">
       <div className="mx-auto max-w-6xl">
@@ -52,7 +87,7 @@ const AdminPage = ({ users }: { users: AdminUser[] }) => {
               <Users className="size-4" />
             </div>
             <div>
-              <p className="text-xl font-semibold leading-none tabular-nums">{users.length}</p>
+              <p className="text-xl font-semibold leading-none tabular-nums">{isLoading ? '—' : users.length}</p>
               <p className="mt-1 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
                 Total users
               </p>
@@ -69,7 +104,21 @@ const AdminPage = ({ users }: { users: AdminUser[] }) => {
             <UserRound className="size-4 text-muted-foreground" />
           </div>
 
-          {users.length === 0 ? (
+          {isLoading ? (
+            <div className="flex min-h-64 flex-col items-center justify-center px-6 text-center">
+              <Loader2 className="mb-3 size-5 animate-spin text-muted-foreground" />
+              <p className="text-sm font-medium">Loading users</p>
+              <p className="mt-1 text-xs text-muted-foreground">Retrieving registered investor accounts.</p>
+            </div>
+          ) : error ? (
+            <div className="flex min-h-64 flex-col items-center justify-center px-6 text-center">
+              <div className="mb-4 flex size-11 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+                <AlertCircle className="size-5" />
+              </div>
+              <p className="text-sm font-medium">Could not load users</p>
+              <p className="mt-1 max-w-sm text-xs leading-relaxed text-muted-foreground">{error}</p>
+            </div>
+          ) : users.length === 0 ? (
             <div className="flex min-h-64 flex-col items-center justify-center px-6 text-center">
               <div className="mb-4 flex size-11 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
                 <Users className="size-5" />
