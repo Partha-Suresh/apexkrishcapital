@@ -5,8 +5,9 @@ import Navbar from "@/components/navbar";
 import ThemeProvider from "@/components/theme-provider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
+import { dark, neobrutalism, shadcn } from "@clerk/ui/themes";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,7 +45,10 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
         <ThemeProvider>
-          <ClerkProvider>
+          <ClerkProvider
+            appearance={{
+              theme: neobrutalism,
+            }}>
             <Navbar />
             {children}
           </ClerkProvider>

@@ -43,7 +43,41 @@ export default function LoginPage() {
 
           <div className="flex justify-center lg:justify-end">
             <div className="rounded-[28px] border border-border bg-card text-card-foreground p-3 shadow-sm backdrop-blur-xl">
-              <SignIn appearance={{ theme: neobrutalism }} />
+          <SignIn
+  appearance={{
+    theme: neobrutalism,
+
+    elements: {
+      socialButtonsBlockButton: {
+        backgroundColor: "#6B6685",
+        color: "#FFFFFF",
+
+        "&:hover": {
+          backgroundColor: "#5F5A78",
+          color: "#FFFFFF",
+        },
+
+        "&:focus": {
+          backgroundColor: "#6B6685",
+          color: "#FFFFFF",
+        },
+
+        "&:active": {
+          backgroundColor: "#55516C",
+          color: "#FFFFFF",
+        },
+      },
+
+      socialButtonsBlockButtonText: {
+        color: "#FFFFFF",
+
+        "&:hover": {
+          color: "#FFFFFF",
+        },
+      },
+    },
+  }}
+/>
             </div>
           </div>
         </div>
