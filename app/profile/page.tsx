@@ -223,7 +223,7 @@ export default function ProfilePage() {
 
 			if (!res.ok) {
 				const errData = await res.json()
-				throw new Error(errData.error || "Failed to save profile to database")
+				throw new Error(errData.error || "Failed to save profile")
 			}
 
 			// Also backup to localStorage
@@ -296,7 +296,7 @@ export default function ProfilePage() {
 							</div>
 							<span className="text-[11px] font-mono text-muted-foreground mt-2.5">
 								{user?.imageUrl
-									? "Synced from your Google account"
+									? "Synced from your account"
 									: "Default investor avatar"}
 							</span>
 						</div>
@@ -445,13 +445,13 @@ export default function ProfilePage() {
 								className="h-11 px-7 rounded-full text-xs font-semibold tracking-wide uppercase transition active:scale-[0.98] shadow-xs cursor-pointer inline-flex items-center gap-2"
 							>
 								{saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-								<span>{saving ? "Saving to Database..." : "Save Changes"}</span>
+								<span>{saving ? "Saving Profile..." : "Save Changes"}</span>
 							</Button>
 
 							{saved && (
 								<div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium border border-emerald-500/20 animate-in fade-in zoom-in-95">
 									<Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-									<span>Saved to MongoDB</span>
+									<span>Profile successfully saved</span>
 								</div>
 							)}
 						</div>

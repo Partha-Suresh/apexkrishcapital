@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import nodemailer from "nodemailer";
 
 export const PROFILE_NOTIFICATION_TO =
@@ -26,8 +28,11 @@ export async function sendProfileUpdateNotification(user: Record<string, any>) {
     },
   });
 
+  const fullName =
+    user.name || `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Investor";
+
   const userDetails = {
-    Name: user.name || `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+    Name: fullName,
     Email: user.email,
     "First Name": user.firstName || "",
     "Middle Name": user.middleName || "",
@@ -44,7 +49,16 @@ export async function sendProfileUpdateNotification(user: Record<string, any>) {
     .map(([label, value]) => `${label}: ${value || "N/A"}`)
     .join("\n");
 
-  const subject = `Investor profile updated: ${user.name || user.email}`;
+  const subject = `Investor Profile Updated – ${fullName}`;
+
+  const logoPath = path.join(process.cwd(), "public", "apexkrishnalogo.png");
+  const logoAttachment = fs.existsSync(logoPath)
+    ? {
+        filename: "apexkrishnalogo.png",
+        path: logoPath,
+        cid: "apexKrishLogo",
+      }
+    : null;
 
   await transporter.sendMail({
     from: process.env.SMTP_FROM || smtpUser,
@@ -52,17 +66,63 @@ export async function sendProfileUpdateNotification(user: Record<string, any>) {
     subject,
     text: `Investor profile updated\n\n${detailRows}`,
     html: `
-      <h2>Investor profile updated</h2>
-      <p>The following investor profile details were saved:</p>
-      <ul>
-        ${Object.entries(userDetails)
-          .map(
-            ([label, value]) =>
-              `<li><strong>${label}:</strong> ${value || "N/A"}</li>`
-          )
-          .join("")}
-      </ul>
+      <div style="margin:0; padding:0; background-color:#f4f6f8; font-family:Arial, Helvetica, sans-serif; color:#1a1a1a;">
+        <div style="max-width:700px; margin:0 auto; background:#ffffff; border:1px solid #e7e7e7; border-radius:12px; overflow:hidden;">
+          <div style="padding:24px 32px 16px; border-bottom:1px solid #ececec; background:#ffffff;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr>
+                <td align="left" valign="middle" style="padding:0;">
+                  ${
+                    logoAttachment
+                      ? `<img src="cid:apexKrishLogo" alt="Apex Krish Capital" width="180" style="display:block; max-width:180px; height:auto; border:0;" />`
+                      : ""
+                  }
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="padding:32px; background:#ffffff;">
+            <div style="font-size:12px; letter-spacing:1.5px; text-transform:uppercase; color:#7a7a7a; font-weight:bold; margin-bottom:12px;">
+              Investor Profile Update
+            </div>
+
+            <h2 style="margin:0 0 12px; font-size:28px; line-height:1.3; color:#111827; font-weight:700;">
+              Investor profile successfully updated
+            </h2>
+
+            <p style="margin:0 0 22px; font-size:15px; line-height:1.7; color:#3f3f46;">
+              The following investor profile details were saved in the system for <strong>${fullName}</strong>.
+            </p>
+
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse; background:#fafafa; border:1px solid #ececec; border-radius:10px; overflow:hidden;">
+              <tbody>
+                ${Object.entries(userDetails)
+                  .map(([label, value]) => {
+                    const safeValue = value || "N/A";
+                    return `
+                      <tr>
+                        <td style="padding:12px 16px; border-bottom:1px solid #ececec; font-size:13px; color:#52525b; width:180px; font-weight:600; background:#f8fafc;">
+                          ${label}
+                        </td>
+                        <td style="padding:12px 16px; border-bottom:1px solid #ececec; font-size:13px; color:#1f2937; line-height:1.5;">
+                          ${safeValue}
+                        </td>
+                      </tr>
+                    `;
+                  })
+                  .join("")}
+              </tbody>
+            </table>
+
+            <p style="margin:20px 0 0; font-size:12px; line-height:1.7; color:#6b7280;">
+              This notification was generated automatically by the Apex Krish Capital investor profile system.
+            </p>
+          </div>
+        </div>
+      </div>
     `,
+    attachments: logoAttachment ? [logoAttachment] : undefined,
   });
 
   return { sent: true, to: PROFILE_NOTIFICATION_TO };
