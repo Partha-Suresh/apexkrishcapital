@@ -3,7 +3,9 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth, useUser } from "@clerk/nextjs";
+import { cn } from "@/lib/utils";
 import { DropdownMenuAvatar } from "./avatarbutton";
 import DarkModeToggle from "./dark-mode-toggle";
 import { Menu, X, ArrowUpRight } from "lucide-react";
@@ -15,10 +17,12 @@ const navItems = [
 ];
 
 export default function Navbar() {
+  const pathname = usePathname();
   const { isLoaded, isSignedIn, user } = useUser();
   const { sessionClaims } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isAdmin = sessionClaims?.metadata?.role === "admin";
+  const isAdminPage = pathname?.startsWith("/admin");
 
   return (
     <>
@@ -106,7 +110,12 @@ export default function Navbar() {
           {isAdmin && (
             <Link
               href="/admin"
-              className="pointer-events-auto absolute right-[-100px] top-1/2 -translate-y-1/2 hidden sm:inline-flex h-11 items-center justify-center rounded-full border border-border/80 bg-background/95 px-5 text-[10.5px] font-semibold uppercase tracking-[0.2em] text-foreground shadow-[0_10px_30px_rgba(0,0,0,0.12)] backdrop-blur-2xl transition-all hover:shadow-[0_0_0_1px_rgba(255,255,255,0.35),0_0_24px_rgba(59,130,246,0.35)] hover:border-primary/60 hover:bg-background whitespace-nowrap"
+              className={cn(
+                "pointer-events-auto absolute right-[-100px] top-1/2 -translate-y-1/2 hidden sm:inline-flex h-11 items-center justify-center rounded-full border px-5 text-[10.5px] font-semibold uppercase tracking-[0.2em] backdrop-blur-2xl transition-all whitespace-nowrap",
+                isAdminPage
+                  ? "border-primary/50 bg-background text-foreground shadow-[0_0_12px_rgba(59,130,246,0.18)] dark:shadow-[0_0_14px_rgba(59,130,246,0.25)] hover:shadow-[0_0_16px_rgba(59,130,246,0.28)]"
+                  : "border-border/80 bg-background/95 text-foreground shadow-[0_10px_30px_rgba(0,0,0,0.06)] hover:border-primary/40 hover:shadow-[0_0_12px_rgba(59,130,246,0.18)] dark:hover:shadow-[0_0_14px_rgba(59,130,246,0.22)]"
+              )}
             >
               Admin
             </Link>

@@ -14,6 +14,7 @@ export interface IUser {
   avatar?: string;
   investorStatus?: "Accredited investor(1M+)" | "Qualified client(2M+)" | "Qualified purchaser(5M+)" | "Not Accredited" | string;
   citizenship?: "US" | "Non-US" | string;
+  verificationStatus?: "yet to be verified" | "not verified" | "verified" | "pending verification" | string;
 }
 
 export interface IUserDocument extends IUser, Document {
@@ -44,6 +45,11 @@ const userSchema = new Schema<IUserDocument>(
       type: String,
       enum: ["US", "Non-US"],
       default: "US",
+    },
+    verificationStatus: {
+      type: String,
+      enum: ["pending verification", "not verified", "verified", "yet to be verified"],
+      default: "pending verification",
     },
   },
   { timestamps: true }
