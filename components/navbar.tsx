@@ -11,8 +11,9 @@ import DarkModeToggle from "./dark-mode-toggle";
 import { Menu, X, ArrowUpRight } from "lucide-react";
 
 const navItems = [
-  { label: "About Us", href: "/aboutus" },
+  { label: "Offerings", href: "/#offerings" },
   { label: "Focus", href: "/#focus" },
+  { label: "About Us", href: "/aboutus" },
   { label: "Waitlist", href: "/#waitlist" },
 ];
 
