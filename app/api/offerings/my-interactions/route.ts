@@ -6,7 +6,8 @@ import Commitment from "@/models/commitment.model";
 
 export async function GET() {
   try {
-    const { userId: clerkUserId } = await auth();
+    const { userId: clerkUserId, sessionClaims } = await auth();
+    const isAdmin = sessionClaims?.metadata?.role === "admin";
 
     if (!clerkUserId) {
       return NextResponse.json({
@@ -24,7 +25,7 @@ export async function GET() {
     if (!email) {
       return NextResponse.json({
         isSignedIn: true,
-        verificationStatus: null,
+        verificationStatus: isAdmin ? "verified" : null,
         interactions: {},
       });
     }
@@ -32,12 +33,16 @@ export async function GET() {
     await dbConnect();
 
     const dbUser = await User.findOne({ email: email.toLowerCase().trim() });
-    const verificationStatus = dbUser?.verificationStatus || "pending verification";
+    let verificationStatus = dbUser?.verificationStatus || "pending verification";
+
+    if (isAdmin || dbUser?.role === "admin") {
+      verificationStatus = "verified";
+    }
 
     if (!dbUser) {
       return NextResponse.json({
         isSignedIn: true,
-        verificationStatus: "unregistered",
+        verificationStatus: isAdmin ? "verified" : "unregistered",
         interactions: {},
       });
     }

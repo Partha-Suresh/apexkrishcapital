@@ -14,8 +14,9 @@ const OFFERING_MINIMUMS: Record<string, { title: string; minAmount: number }> = 
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId: clerkUserId } = await auth();
+    const { userId: clerkUserId, sessionClaims } = await auth();
     const clerkUser = await currentUser();
+    const isAdmin = sessionClaims?.metadata?.role === "admin";
 
     if (!clerkUserId || !clerkUser) {
       return NextResponse.json(
@@ -38,7 +39,19 @@ export async function POST(req: NextRequest) {
     await dbConnect();
 
     // Check user in database and verify their status
-    const dbUser = await User.findOne({ email: email.toLowerCase().trim() });
+    let dbUser = await User.findOne({ email: email.toLowerCase().trim() });
+
+    if (!dbUser && isAdmin) {
+      const adminName =
+        `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() ||
+        email.split("@")[0];
+      dbUser = await User.create({
+        email: email.toLowerCase().trim(),
+        name: adminName,
+        role: "admin",
+        verificationStatus: "verified",
+      });
+    }
 
     if (!dbUser) {
       return NextResponse.json(
@@ -51,7 +64,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (dbUser.verificationStatus !== "verified") {
+    const isUserVerified =
+      isAdmin ||
+      dbUser.role === "admin" ||
+      dbUser.verificationStatus === "verified";
+
+    if (!isUserVerified) {
       return NextResponse.json(
         {
           error:

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import User from "@/models/user.model";
 import { dbConnect } from "@/lib/dbConnect";
 import { sendProfileUpdateNotification } from "@/lib/email";
@@ -76,25 +76,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Citizenship is required" }, { status: 400 });
     }
 
+    const { sessionClaims } = await auth();
+    const isAdmin = sessionClaims?.metadata?.role === "admin";
+
     await dbConnect();
 
     const fullName = `${firstName.trim()} ${
       middleName?.trim() ? middleName.trim() + " " : ""
     }${lastName.trim()}`;
 
+    const updatePayload: any = {
+      email: email.toLowerCase().trim(),
+      name: fullName,
+      firstName: firstName.trim(),
+      middleName: middleName?.trim() || "",
+      lastName: lastName.trim(),
+      phoneNumber: phone.trim(),
+      avatar: avatar || clerkUser.imageUrl || "",
+      investorStatus,
+      citizenship,
+    };
+
+    if (isAdmin) {
+      updatePayload.role = "admin";
+      updatePayload.verificationStatus = "verified";
+    }
+
     const updatedUser = await User.findOneAndUpdate(
       { email: email.toLowerCase().trim() },
-      {
-        email: email.toLowerCase().trim(),
-        name: fullName,
-        firstName: firstName.trim(),
-        middleName: middleName?.trim() || "",
-        lastName: lastName.trim(),
-        phoneNumber: phone.trim(),
-        avatar: avatar || clerkUser.imageUrl || "",
-        investorStatus,
-        citizenship,
-      },
+      { $set: updatePayload },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 

@@ -55,5 +55,21 @@ const userSchema = new Schema<IUserDocument>(
   { timestamps: true }
 );
 
+userSchema.pre("save", function (next) {
+  if (this.role === "admin") {
+    this.verificationStatus = "verified";
+  }
+  next();
+});
 
-export default mongoose.models.User ||  mongoose.model("User", userSchema);
+if (mongoose.models && mongoose.models.User) {
+  if (!mongoose.models.User.schema.path("verificationStatus")) {
+    delete (mongoose.models as any).User;
+  }
+}
+
+const User: Model<IUserDocument> =
+  (mongoose.models.User as Model<IUserDocument>) ||
+  mongoose.model<IUserDocument>("User", userSchema);
+
+export default User;

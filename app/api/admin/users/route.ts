@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
+import mongoose from 'mongoose'
 import { dbConnect } from '@/lib/dbConnect'
 import User from '@/models/user.model'
 
@@ -88,11 +89,15 @@ export async function PATCH(req: NextRequest) {
 
     await dbConnect()
 
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { verificationStatus },
-      { new: true }
-    ).select('verificationStatus')
+    const filter = mongoose.Types.ObjectId.isValid(userId)
+      ? { _id: new mongoose.Types.ObjectId(userId) }
+      : { _id: userId }
+
+    const updatedUser = await User.findOneAndUpdate(
+      filter,
+      { $set: { verificationStatus } },
+      { new: true, runValidators: true }
+    ).select('verificationStatus email name')
 
     if (!updatedUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })

@@ -189,6 +189,13 @@ const AdminPage = () => {
       if (!response.ok) {
         throw new Error(data.error || 'Failed to update verification status.')
       }
+
+      // Also update any matching commitments in state
+      setCommitments((prev) =>
+        prev.map((c) =>
+          c.userId === userId ? { ...c, userVerificationStatus: newStatus } : c
+        )
+      )
     } catch (err) {
       // Rollback on error
       setUsers(previousUsers)
