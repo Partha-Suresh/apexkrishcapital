@@ -16,13 +16,7 @@ export default function Home() {
   };
 
   return (
-    <div className="relative flex flex-col min-h-screen bg-background text-foreground">
-      <div className="absolute right-4 top-4 z-20">
-        <Button asChild variant="outline" className="h-9 rounded-full px-4 text-[10px] font-mono font-semibold uppercase tracking-wider shadow-xs">
-          <Link href="/admin">Admin</Link>
-        </Button>
-      </div>
-
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
       {/* Test Build Header Notice */}
       <div className="pt-24 sm:pt-28 pb-4 text-center">
         <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1 text-[10.5px] font-mono font-medium text-muted-foreground shadow-xs">

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useUser } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { DropdownMenuAvatar } from "./avatarbutton";
 import DarkModeToggle from "./dark-mode-toggle";
 import { Menu, X, ArrowUpRight } from "lucide-react";
@@ -16,88 +16,101 @@ const navItems = [
 
 export default function Navbar() {
   const { isLoaded, isSignedIn, user } = useUser();
+  const { sessionClaims } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isAdmin = sessionClaims?.metadata?.role === "admin";
 
   return (
     <>
       {/* Desktop & Tablet Floating Navbar */}
       <header className="fixed top-5 md:top-8 left-0 right-0 z-50 flex justify-center px-4 md:px-6 pointer-events-none">
-        <div className="pointer-events-auto flex w-full max-w-[840px] items-center justify-between rounded-[20px] border border-border/70 bg-background/80 py-2.5 px-5 shadow-sm backdrop-blur-xl transition-all">
-          {/* Brand */}
-          <div className="flex items-center gap-2.5">
-            <Link
-              href="/"
-              className="flex items-center gap-2.5 transition-transform active:scale-[0.98]"
-              aria-label="Apex Krish Capital Home"
-            >
-              <Image
-                src="/apexkrishnalogo.png"
-                alt="Apex Krish Capital"
-                width={28}
-                height={28}
-                className="rounded-md object-contain"
-                priority
-              />
-              <span className="text-[14px] font-semibold tracking-tight text-foreground">
-                Apex Krish
-              </span>
-            </Link>
-
-            <span className="flex items-center justify-center px-2 py-0.5 rounded-[4px] bg-primary text-primary-foreground text-[8.5px] font-bold tracking-[0.7px] uppercase font-mono">
-              TEST BUILD
-            </span>
-          </div>
-
-          {/* Desktop Nav Items */}
-          <nav className="hidden md:flex items-center gap-7 text-[14px] font-[450] text-muted-foreground">
-            {navItems.map((item) => (
+        <div className="relative w-full max-w-[840px]">
+          <div className="pointer-events-auto flex w-full items-center justify-between rounded-[20px] border border-border/70 bg-background/80 py-2.5 px-5 shadow-sm backdrop-blur-xl transition-all">
+            {/* Brand */}
+            <div className="flex items-center gap-2.5">
               <Link
-                key={item.label}
-                href={item.href}
-                className="transition-colors hover:text-foreground"
+                href="/"
+                className="flex items-center gap-2.5 transition-transform active:scale-[0.98]"
+                aria-label="Apex Krish Capital Home"
               >
-                {item.label}
+                <Image
+                  src="/apexkrishnalogo.png"
+                  alt="Apex Krish Capital"
+                  width={28}
+                  height={28}
+                  className="rounded-md object-contain"
+                  priority
+                />
+                <span className="text-[14px] font-semibold tracking-tight text-foreground">
+                  Apex Krish
+                </span>
               </Link>
-            ))}
-          </nav>
 
-          {/* Auth & CTA */}
-          <div className="flex items-center gap-3">
-            {isLoaded ? (
-              isSignedIn ? (
-                <DropdownMenuAvatar img_url={user?.imageUrl} />
+              <span className="flex items-center justify-center px-2 py-0.5 rounded-[4px] bg-primary text-primary-foreground text-[8.5px] font-bold tracking-[0.7px] uppercase font-mono">
+                TEST BUILD
+              </span>
+            </div>
+
+            {/* Desktop Nav Items */}
+            <nav className="hidden md:flex items-center gap-7 text-[14px] font-[450] text-muted-foreground">
+              {navItems.map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className="transition-colors hover:text-foreground"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+
+            {/* Auth & CTA */}
+            <div className="flex items-center gap-3">
+              {isLoaded ? (
+                isSignedIn ? (
+                  <DropdownMenuAvatar img_url={user?.imageUrl} />
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href="/sign-in"
+                      className="hidden sm:inline-flex text-[14px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      Log in
+                    </Link>
+                    <a
+                      href="#waitlist"
+                      className="flex h-9 items-center justify-center rounded-[12px] bg-primary px-4 text-[13px] font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98] shadow-xs whitespace-nowrap"
+                    >
+                      Join Waitlist
+                    </a>
+                  </div>
+                )
               ) : (
-                <div className="flex items-center gap-3">
-                  <Link
-                    href="/sign-in"
-                    className="hidden sm:inline-flex text-[14px] font-medium text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    Log in
-                  </Link>
-                  <a
-                    href="#waitlist"
-                    className="flex h-9 items-center justify-center rounded-[12px] bg-primary px-4 text-[13px] font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98] shadow-xs whitespace-nowrap"
-                  >
-                    Join Waitlist
-                  </a>
-                </div>
-              )
-            ) : (
-              <div className="w-9 h-9 rounded-full bg-muted animate-pulse" />
-            )}
-            <DarkModeToggle />
+                <div className="w-9 h-9 rounded-full bg-muted animate-pulse" />
+              )}
+              <DarkModeToggle />
 
-            {/* Mobile Menu Toggle Button */}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="flex md:hidden h-9 w-9 items-center justify-center rounded-[12px] border border-border bg-background text-foreground hover:bg-muted transition active:scale-95 shadow-xs"
-              aria-label="Toggle navigation menu"
-              aria-expanded={mobileMenuOpen}
-            >
-              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-            </button>
+              {/* Mobile Menu Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="flex md:hidden h-9 w-9 items-center justify-center rounded-[12px] border border-border bg-background text-foreground hover:bg-muted transition active:scale-95 shadow-xs"
+                aria-label="Toggle navigation menu"
+                aria-expanded={mobileMenuOpen}
+              >
+                {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
+
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="pointer-events-auto absolute right-[-100px] top-1/2 -translate-y-1/2 hidden sm:inline-flex h-11 items-center justify-center rounded-full border border-border/80 bg-background/95 px-5 text-[10.5px] font-semibold uppercase tracking-[0.2em] text-foreground shadow-[0_10px_30px_rgba(0,0,0,0.12)] backdrop-blur-2xl transition-all hover:shadow-[0_0_0_1px_rgba(255,255,255,0.35),0_0_24px_rgba(59,130,246,0.35)] hover:border-primary/60 hover:bg-background whitespace-nowrap"
+            >
+              Admin
+            </Link>
+          )}
         </div>
       </header>
 
@@ -131,6 +144,16 @@ export default function Navbar() {
 
               {isLoaded && isSignedIn ? (
                 <div className="flex flex-col gap-2 pt-1">
+                  {isAdmin && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-between py-2 text-[15px] font-medium text-foreground hover:text-primary transition-colors"
+                    >
+                      <span>Admin Dashboard</span>
+                      <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
+                    </Link>
+                  )}
                   <Link
                     href="/profile"
                     onClick={() => setMobileMenuOpen(false)}
