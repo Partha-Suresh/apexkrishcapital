@@ -152,6 +152,17 @@
   border: 0.5px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0px 16px 40px -10px rgba(0, 0, 0, 0.35);
 }
+/*
+ * Radix Select uses react-remove-scroll while its listbox is open. Keep the
+ * document scrollbar and its layout width intact for that short-lived menu;
+ * the listbox is already rendered in a portal, so page scrolling does not
+ * affect its placement.
+ */
+body[data-scroll-locked]:has([data-slot="select-content"]) {
+  overflow-y: scroll !important;
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+}
 
 .idle-card {
   background: var(--card);
