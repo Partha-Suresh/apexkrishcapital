@@ -40,6 +40,11 @@ export async function GET(req: NextRequest) {
   }
 }
 
+// Rate limiting configuration to protect Nodemailer SMTP quota and prevent spam/flooding
+const MAX_UPDATES_PER_HOUR = 5; // Maximum profile updates allowed per 1-hour rolling window
+const MAX_UPDATES_PER_DAY = 15; // Maximum profile updates allowed per 24-hour rolling window
+const MIN_COOLDOWN_SECONDS = 15; // Minimum interval required between consecutive updates
+
 export async function POST(req: NextRequest) {
   try {
     const clerkUser = await currentUser();
@@ -80,13 +85,96 @@ export async function POST(req: NextRequest) {
     const isAdmin = sessionClaims?.metadata?.role === "admin";
 
     await dbConnect();
+    const normalizedEmail = email.toLowerCase().trim();
+    const existingUser = await User.findOne({ email: normalizedEmail });
+
+    const now = new Date();
+    const nowTime = now.getTime();
+
+    // Check if user already exists to enforce rate limiting and detect duplicate saves
+    if (existingUser) {
+      // 1. Check if the submitted profile payload is completely identical to DB
+      const isUnchanged =
+        existingUser.firstName === firstName.trim() &&
+        (existingUser.middleName || "") === (middleName?.trim() || "") &&
+        existingUser.lastName === lastName.trim() &&
+        existingUser.phoneNumber === phone.trim() &&
+        existingUser.investorStatus === investorStatus &&
+        existingUser.citizenship === citizenship &&
+        (existingUser.avatar || "") === (avatar || clerkUser.imageUrl || "");
+
+      if (isUnchanged) {
+        return NextResponse.json({
+          success: true,
+          message: "Profile is already up to date.",
+          user: existingUser,
+        });
+      }
+
+      // 2. Cooldown check between successive saves
+      if (existingUser.lastProfileUpdateAt) {
+        const lastUpdate = new Date(existingUser.lastProfileUpdateAt).getTime();
+        const elapsedSec = (nowTime - lastUpdate) / 1000;
+        if (elapsedSec < MIN_COOLDOWN_SECONDS) {
+          const remaining = Math.ceil(MIN_COOLDOWN_SECONDS - elapsedSec);
+          return NextResponse.json(
+            {
+              error: `Please wait ${remaining} second${remaining > 1 ? "s" : ""} before saving your profile again.`,
+            },
+            { status: 429 }
+          );
+        }
+      }
+
+      // 3. Hourly and Daily rolling window rate limit checks
+      const oneHourAgo = nowTime - 60 * 60 * 1000;
+      const oneDayAgo = nowTime - 24 * 60 * 60 * 1000;
+
+      const rawHistory: (Date | string)[] = existingUser.profileUpdateHistory || [];
+      const historyTimestamps = rawHistory
+        .map((t) => new Date(t).getTime())
+        .filter((t) => !isNaN(t) && t > oneDayAgo);
+
+      const inLastHour = historyTimestamps.filter((t) => t > oneHourAgo);
+
+      if (inLastHour.length >= MAX_UPDATES_PER_HOUR) {
+        const oldestInHour = Math.min(...inLastHour);
+        const minutesLeft = Math.max(
+          1,
+          Math.ceil((oldestInHour + 60 * 60 * 1000 - nowTime) / 60000)
+        );
+        return NextResponse.json(
+          {
+            error: `Profile update limit reached (${MAX_UPDATES_PER_HOUR} updates per hour). To protect system resources and email services, please wait ${minutesLeft} minute${minutesLeft > 1 ? "s" : ""} before saving again.`,
+          },
+          { status: 429 }
+        );
+      }
+
+      if (historyTimestamps.length >= MAX_UPDATES_PER_DAY) {
+        return NextResponse.json(
+          {
+            error: `Daily profile update limit reached (${MAX_UPDATES_PER_DAY} updates per 24 hours). Please try again tomorrow.`,
+          },
+          { status: 429 }
+        );
+      }
+    }
 
     const fullName = `${firstName.trim()} ${
       middleName?.trim() ? middleName.trim() + " " : ""
     }${lastName.trim()}`;
 
+    // Filter existing history to last 24h and add current timestamp
+    const oneDayAgo = nowTime - 24 * 60 * 60 * 1000;
+    const existingTimestamps = (existingUser?.profileUpdateHistory || [])
+      .map((t: any) => new Date(t).getTime())
+      .filter((t: number) => !isNaN(t) && t > oneDayAgo);
+
+    const updatedHistory = [...existingTimestamps, nowTime].map((t) => new Date(t));
+
     const updatePayload: any = {
-      email: email.toLowerCase().trim(),
+      email: normalizedEmail,
       name: fullName,
       firstName: firstName.trim(),
       middleName: middleName?.trim() || "",
@@ -95,6 +183,8 @@ export async function POST(req: NextRequest) {
       avatar: avatar || clerkUser.imageUrl || "",
       investorStatus,
       citizenship,
+      lastProfileUpdateAt: now,
+      profileUpdateHistory: updatedHistory,
     };
 
     if (isAdmin) {
@@ -103,7 +193,7 @@ export async function POST(req: NextRequest) {
     }
 
     const updatedUser = await User.findOneAndUpdate(
-      { email: email.toLowerCase().trim() },
+      { email: normalizedEmail },
       { $set: updatePayload },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
@@ -111,7 +201,7 @@ export async function POST(req: NextRequest) {
     try {
       await sendProfileUpdateNotification({
         ...updatedUser.toObject(),
-        email: email.toLowerCase().trim(),
+        email: normalizedEmail,
       });
     } catch (mailError) {
       console.error("Failed to send profile update email:", mailError);

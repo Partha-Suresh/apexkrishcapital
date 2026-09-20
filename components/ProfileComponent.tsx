@@ -441,17 +441,17 @@ export default function ProfilePage() {
 						<div className="w-full flex items-center justify-between pt-4 border-t border-border">
 							<Button
 								onClick={handleSave}
-								disabled={saving}
+								disabled={saving || saved}
 								className="h-11 px-7 rounded-full text-xs font-semibold tracking-wide uppercase transition active:scale-[0.98] shadow-xs cursor-pointer inline-flex items-center gap-2"
 							>
 								{saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-								<span>{saving ? "Saving to Database..." : "Save Changes"}</span>
+								<span>{saving ? "Saving Profile..." : saved ? "Profile Saved" : "Save Changes"}</span>
 							</Button>
 
 							{saved && (
 								<div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium border border-emerald-500/20 animate-in fade-in zoom-in-95">
 									<Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-									<span>Saved to MongoDB</span>
+									<span>Saved successfully</span>
 								</div>
 							)}
 						</div>

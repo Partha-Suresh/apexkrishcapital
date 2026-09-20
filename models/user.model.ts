@@ -15,6 +15,8 @@ export interface IUser {
   investorStatus?: "Accredited investor(1M+)" | "Qualified client(2M+)" | "Qualified purchaser(5M+)" | "Not Accredited" | string;
   citizenship?: "US" | "Non-US" | string;
   verificationStatus?: "yet to be verified" | "not verified" | "verified" | "pending verification" | string;
+  profileUpdateHistory?: Date[];
+  lastProfileUpdateAt?: Date;
 }
 
 export interface IUserDocument extends IUser, Document {
@@ -51,6 +53,13 @@ const userSchema = new Schema<IUserDocument>(
       enum: ["pending verification", "not verified", "verified", "yet to be verified"],
       default: "pending verification",
     },
+    profileUpdateHistory: {
+      type: [Date],
+      default: [],
+    },
+    lastProfileUpdateAt: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );
@@ -63,7 +72,10 @@ userSchema.pre("save", function (next) {
 });
 
 if (mongoose.models && mongoose.models.User) {
-  if (!mongoose.models.User.schema.path("verificationStatus")) {
+  if (
+    !mongoose.models.User.schema.path("verificationStatus") ||
+    !mongoose.models.User.schema.path("profileUpdateHistory")
+  ) {
     delete (mongoose.models as any).User;
   }
 }

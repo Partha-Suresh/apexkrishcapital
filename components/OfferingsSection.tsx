@@ -181,6 +181,16 @@ export default function OfferingsSection({
 
   const micro1Interaction = interactions["micro1-inc"];
 
+  function openCommitModal() {
+    if (micro1Interaction?.amount) {
+      setCommitAmount(micro1Interaction.amount.toString());
+    } else {
+      setCommitAmount("5000");
+    }
+    setCommitError(null);
+    setCommitModalOpen(true);
+  }
+
   return (
     <section id="offerings" className="space-y-8 py-6 scroll-mt-24">
       {/* Header & Filter Tabs */}
@@ -396,27 +406,34 @@ export default function OfferingsSection({
                     ) : null}
 
                     {/* Action Buttons for Verified User */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div className="flex flex-col gap-2.5 w-full">
                       <Button
-                        variant={micro1Interaction?.type === "interest" ? "secondary" : "outline"}
-                        onClick={() => handleExpressInterest("micro1-inc")}
-                        disabled={isExpressingInterest}
-                        className="h-10 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
+                        onClick={openCommitModal}
+                        className="w-full h-10 px-4 rounded-xl text-xs font-semibold uppercase tracking-wider shadow-xs inline-flex items-center justify-center gap-2"
                       >
-                        {isExpressingInterest ? (
-                          <Loader2 className="size-3.5 animate-spin mr-1.5" />
-                        ) : micro1Interaction?.type === "interest" ? (
-                          <CheckCircle2 className="size-3.5 text-primary mr-1.5" />
-                        ) : null}
-                        {micro1Interaction?.type === "interest" ? "Interested ✓" : "I'm Interested"}
+                        <DollarSign className="size-3.5" />
+                        <span>
+                          {micro1Interaction?.type === "commitment" ? "Update Commitment" : "Commit Capital"}
+                        </span>
                       </Button>
 
-                      <Button
-                        onClick={() => setCommitModalOpen(true)}
-                        className="h-10 rounded-xl text-xs font-semibold uppercase tracking-wider shadow-xs"
-                      >
-                        {micro1Interaction?.type === "commitment" ? "Update Commitment" : "Commit Capital"}
-                      </Button>
+                      {micro1Interaction?.type !== "commitment" && (
+                        <Button
+                          variant={micro1Interaction?.type === "interest" ? "secondary" : "outline"}
+                          onClick={() => handleExpressInterest("micro1-inc")}
+                          disabled={isExpressingInterest}
+                          className="w-full h-10 px-4 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all inline-flex items-center justify-center gap-2"
+                        >
+                          {isExpressingInterest ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : micro1Interaction?.type === "interest" ? (
+                            <CheckCircle2 className="size-3.5 text-primary" />
+                          ) : null}
+                          <span>
+                            {micro1Interaction?.type === "interest" ? "Interested ✓" : "I'm Interested"}
+                          </span>
+                        </Button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -522,7 +539,7 @@ export default function OfferingsSection({
             <div className="flex items-center justify-between pb-3 border-b border-border font-mono">
               <div>
                 <span className="text-[10.5px] uppercase tracking-wider text-muted-foreground font-bold">
-                  CAPITAL COMMITMENT
+                  {micro1Interaction?.type === "commitment" ? "UPDATE ALLOCATION COMMITMENT" : "CAPITAL COMMITMENT"}
                 </span>
                 <h3 className="text-lg font-bold text-foreground mt-0.5">
                   Micro1 Inc. SPV Series
@@ -626,6 +643,8 @@ export default function OfferingsSection({
                       <Loader2 className="size-3.5 animate-spin mr-2" />
                       Recording...
                     </>
+                  ) : micro1Interaction?.type === "commitment" ? (
+                    "Update Commitment"
                   ) : (
                     "Confirm Commitment"
                   )}
