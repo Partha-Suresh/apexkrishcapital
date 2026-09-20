@@ -48,10 +48,6 @@ export default function Navbar() {
                   Apex Krish
                 </span>
               </Link>
-
-              <span className="flex items-center justify-center px-2 py-0.5 rounded-[4px] bg-primary text-primary-foreground text-[8.5px] font-bold tracking-[0.7px] uppercase font-mono">
-                TEST BUILD
-              </span>
             </div>
 
             {/* Desktop Nav Items */}
@@ -84,15 +80,9 @@ export default function Navbar() {
                   <div className="flex items-center gap-3">
                     <Link
                       href="/sign-in"
-                      className="hidden sm:inline-flex text-[14px] font-medium text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      Log in
-                    </Link>
-                    <Link
-                      href="/profile"
                       className="flex h-9 items-center justify-center rounded-[12px] bg-primary px-4 text-[13px] font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98] shadow-xs whitespace-nowrap"
                     >
-                      Investor Profile
+                      Log in
                     </Link>
                   </div>
                 )
@@ -184,16 +174,9 @@ export default function Navbar() {
                   <Link
                     href="/sign-in"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex h-11 w-full items-center justify-center rounded-xl border border-border bg-muted/60 text-[14px] font-medium text-foreground hover:bg-muted"
-                  >
-                    Log In
-                  </Link>
-                  <Link
-                    href="/profile"
-                    onClick={() => setMobileMenuOpen(false)}
                     className="flex h-11 w-full items-center justify-center rounded-xl bg-primary text-[14px] font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
                   >
-                    Investor Profile
+                    Log In
                   </Link>
                 </div>
               )}

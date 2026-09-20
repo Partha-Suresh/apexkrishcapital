@@ -19,7 +19,7 @@ export async function GET() {
     await dbConnect()
 
     const records = await User.find({ role: { $ne: 'admin' } })
-      .select('name firstName middleName lastName email investorStatus citizenship verificationStatus createdAt')
+      .select('name firstName middleName lastName email phoneNumber investorStatus citizenship verificationStatus createdAt')
       .sort({ createdAt: -1 })
       .lean()
 
@@ -39,6 +39,7 @@ export async function GET() {
         id: user._id.toString(),
         name,
         email: user.email,
+        phoneNumber: user.phoneNumber || null,
         investorStatus: user.investorStatus || 'Not Accredited',
         citizenship: user.citizenship || 'US',
         verificationStatus,

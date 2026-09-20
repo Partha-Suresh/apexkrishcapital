@@ -109,26 +109,28 @@ export default function HeroSection() {
             </a>
           </Button>
 
-          <Button
-            asChild
-            variant="outline"
-            size="lg"
-            className="h-12 px-7 rounded-full font-semibold text-xs uppercase tracking-wider border-border hover:bg-muted cursor-pointer"
-          >
-            <Link href="/profile" className="flex items-center justify-center gap-2">
-              {isSignedIn && isProfileSaved ? (
-                <>
-                  <UserCheck className="size-4 text-emerald-600 dark:text-emerald-400" />
-                  <span>Update Investor Profile</span>
-                </>
-              ) : (
-                <>
-                  <UserPlus className="size-4 text-muted-foreground" />
-                  <span>Complete Investor Profile</span>
-                </>
-              )}
-            </Link>
-          </Button>
+          {isSignedIn && (
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="h-12 px-7 rounded-full font-semibold text-xs uppercase tracking-wider border-border hover:bg-muted cursor-pointer"
+            >
+              <Link href="/profile" className="flex items-center justify-center gap-2">
+                {isProfileSaved ? (
+                  <>
+                    <UserCheck className="size-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Update Investor Profile</span>
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="size-4 text-muted-foreground" />
+                    <span>Complete Investor Profile</span>
+                  </>
+                )}
+              </Link>
+            </Button>
+          )}
         </div>
 
         {/* Editorial Trust Strip */}

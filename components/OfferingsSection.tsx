@@ -347,12 +347,9 @@ export default function OfferingsSection({
                     <p className="text-xs text-muted-foreground leading-relaxed">
                       All offering details are publicly visible. To express interest or commit capital to Micro1 Inc., please sign in as an accredited investor.
                     </p>
-                    <div className="flex flex-col gap-2 pt-1">
+                    <div className="pt-1">
                       <Button asChild className="w-full h-10 rounded-xl font-semibold text-xs uppercase tracking-wider shadow-xs">
                         <Link href="/sign-in">Log in to participate</Link>
-                      </Button>
-                      <Button asChild variant="outline" className="w-full h-10 rounded-xl font-semibold text-xs uppercase tracking-wider">
-                        <Link href="/profile">Complete Investor Profile</Link>
                       </Button>
                     </div>
                   </div>

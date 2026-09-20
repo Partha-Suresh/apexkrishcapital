@@ -19,7 +19,7 @@ export async function GET() {
     await dbConnect();
 
     const records = await Commitment.find({})
-      .populate("userId", "name email investorStatus citizenship verificationStatus")
+      .populate("userId", "name email phoneNumber investorStatus citizenship verificationStatus")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -30,6 +30,7 @@ export async function GET() {
         userId: user._id ? user._id.toString() : record.userId?.toString(),
         userName: record.userName || user.name || "Anonymous Investor",
         userEmail: record.userEmail || user.email,
+        userPhone: user.phoneNumber || null,
         investorStatus: user.investorStatus || "Accredited",
         citizenship: user.citizenship || "US",
         userVerificationStatus: user.verificationStatus || "pending verification",

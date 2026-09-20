@@ -16,6 +16,7 @@ import {
   XCircle,
   Activity,
   Building2,
+  Phone,
 } from 'lucide-react'
 import {
   Select,
@@ -30,6 +31,7 @@ type AdminUser = {
   id: string
   name: string
   email: string
+  phoneNumber: string | null
   investorStatus: string
   citizenship: string
   verificationStatus: 'pending verification' | 'not verified' | 'verified' | string
@@ -41,6 +43,7 @@ type AdminCommitment = {
   userId: string
   userName: string
   userEmail: string
+  userPhone?: string | null
   investorStatus: string
   citizenship: string
   userVerificationStatus: string
@@ -328,6 +331,7 @@ const AdminPage = () => {
                     <thead className="bg-muted/40 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
                       <tr>
                         <th className="px-6 py-3 font-medium">User</th>
+                        <th className="px-6 py-3 font-medium">Phone</th>
                         <th className="px-6 py-3 font-medium">Investor status</th>
                         <th className="px-6 py-3 font-medium">Citizenship</th>
                         <th className="px-6 py-3 font-medium">Verification Status</th>
@@ -347,6 +351,16 @@ const AdminPage = () => {
                                 <p className="truncate text-xs text-muted-foreground">{user.email}</p>
                               </div>
                             </div>
+                          </td>
+                          <td className="px-6 py-4 text-xs font-mono text-muted-foreground">
+                            {user.phoneNumber ? (
+                              <span className="inline-flex items-center gap-1.5">
+                                <Phone className="size-3 text-muted-foreground/70" />
+                                {user.phoneNumber}
+                              </span>
+                            ) : (
+                              '—'
+                            )}
                           </td>
                           <td className="px-6 py-4">
                             <span className="inline-flex rounded-full border border-border bg-muted/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
@@ -418,6 +432,12 @@ const AdminPage = () => {
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{user.name}</p>
                           <p className="mt-0.5 truncate text-xs text-muted-foreground">{user.email}</p>
+                          {user.phoneNumber && (
+                            <p className="mt-1 flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
+                              <Phone className="size-3 text-muted-foreground/70" />
+                              {user.phoneNumber}
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -560,6 +580,12 @@ const AdminPage = () => {
                               <div className="min-w-0">
                                 <p className="truncate text-sm font-medium text-foreground">{item.userName}</p>
                                 <p className="truncate text-xs text-muted-foreground">{item.userEmail}</p>
+                                {item.userPhone && (
+                                  <p className="mt-0.5 flex items-center gap-1 text-[11px] font-mono text-muted-foreground">
+                                    <Phone className="size-2.5" />
+                                    {item.userPhone}
+                                  </p>
+                                )}
                               </div>
                             </div>
                           </td>
@@ -630,6 +656,12 @@ const AdminPage = () => {
                           <div>
                             <p className="font-medium text-sm text-foreground">{item.userName}</p>
                             <p className="text-xs text-muted-foreground">{item.userEmail}</p>
+                            {item.userPhone && (
+                              <p className="mt-0.5 flex items-center gap-1 text-[11px] font-mono text-muted-foreground">
+                                <Phone className="size-2.5" />
+                                {item.userPhone}
+                              </p>
+                            )}
                           </div>
                         </div>
 
