@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -11,13 +12,53 @@ import {
   Layers,
   ShieldCheck,
   Percent,
+  UserCheck,
+  UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export default function HeroSection() {
+  const { isLoaded: isClerkLoaded, isSignedIn: clerkIsSignedIn } = useUser();
   const [activeTab, setActiveTab] = useState<"allocation" | "carry_ledger" | "spv_mechanics">("allocation");
   const [simulatedGain, setSimulatedGain] = useState<number>(100000);
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [isProfileSaved, setIsProfileSaved] = useState(false);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+
+  useEffect(() => {
+    if (!isClerkLoaded) return;
+
+    if (!clerkIsSignedIn) {
+      setIsSignedIn(false);
+      setIsProfileSaved(false);
+      setIsLoadingAuth(false);
+      return;
+    }
+
+    let isMounted = true;
+    async function loadUserState() {
+      setIsLoadingAuth(true);
+      try {
+        const res = await fetch("/api/offerings/my-interactions", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) {
+            setIsSignedIn(!!data.isSignedIn);
+            setIsProfileSaved(!!data.isProfileSaved);
+          }
+        }
+      } catch (e) {
+        // Fallback gracefully
+      } finally {
+        if (isMounted) setIsLoadingAuth(false);
+      }
+    }
+    loadUserState();
+    return () => {
+      isMounted = false;
+    };
+  }, [isClerkLoaded, clerkIsSignedIn]);
 
   // Fee calculations
   const peCarry = Math.round(simulatedGain * 0.20);
@@ -74,7 +115,19 @@ export default function HeroSection() {
             size="lg"
             className="h-12 px-7 rounded-full font-semibold text-xs uppercase tracking-wider border-border hover:bg-muted cursor-pointer"
           >
-            <a href="#waitlist">Join Accredited Syndicate</a>
+            <Link href="/profile" className="flex items-center justify-center gap-2">
+              {isSignedIn && isProfileSaved ? (
+                <>
+                  <UserCheck className="size-4 text-emerald-600 dark:text-emerald-400" />
+                  <span>Update Investor Profile</span>
+                </>
+              ) : (
+                <>
+                  <UserPlus className="size-4 text-muted-foreground" />
+                  <span>Complete Investor Profile</span>
+                </>
+              )}
+            </Link>
           </Button>
         </div>
 

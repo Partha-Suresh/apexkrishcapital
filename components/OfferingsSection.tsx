@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 import {
   TrendingUp,
   ShieldCheck,
@@ -35,6 +36,7 @@ export default function OfferingsSection({
   initialVerificationStatus,
   isSignedIn: initialIsSignedIn,
 }: OfferingsSectionProps) {
+  const { isLoaded: isClerkLoaded, isSignedIn: clerkIsSignedIn } = useUser();
   const [activeTab, setActiveTab] = useState<"current" | "past">("current");
   const [isSignedIn, setIsSignedIn] = useState(initialIsSignedIn ?? false);
   const [verificationStatus, setVerificationStatus] = useState<string | null>(
@@ -53,18 +55,29 @@ export default function OfferingsSection({
   // Interest loading state
   const [isExpressingInterest, setIsExpressingInterest] = useState(false);
 
-  // Fetch current user state & interactions
+  // Fetch current user state & interactions when clerk auth state changes
   useEffect(() => {
+    if (!isClerkLoaded) return;
+
+    if (!clerkIsSignedIn) {
+      setIsSignedIn(false);
+      setVerificationStatus(null);
+      setInteractions({});
+      setIsLoadingInteractions(false);
+      return;
+    }
+
     let isMounted = true;
 
     async function loadInteractions() {
+      setIsLoadingInteractions(true);
       try {
         const res = await fetch("/api/offerings/my-interactions", {
           cache: "no-store",
         });
         const data = await res.json();
         if (isMounted && res.ok) {
-          setIsSignedIn(data.isSignedIn);
+          setIsSignedIn(!!data.isSignedIn);
           setVerificationStatus(data.verificationStatus);
           setInteractions(data.interactions || {});
         }
@@ -79,7 +92,7 @@ export default function OfferingsSection({
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isClerkLoaded, clerkIsSignedIn]);
 
   const isVerified = isSignedIn && verificationStatus === "verified";
   const isPending = isSignedIn && verificationStatus !== "verified";
@@ -339,7 +352,7 @@ export default function OfferingsSection({
                         <Link href="/sign-in">Log in to participate</Link>
                       </Button>
                       <Button asChild variant="outline" className="w-full h-10 rounded-xl font-semibold text-xs uppercase tracking-wider">
-                        <a href="#waitlist">Request Accreditation Access</a>
+                        <Link href="/profile">Complete Investor Profile</Link>
                       </Button>
                     </div>
                   </div>

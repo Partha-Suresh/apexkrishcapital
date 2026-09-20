@@ -1,9 +1,5 @@
-'use client'
-
-import { useState } from "react";
 import Link from "next/link";
 import {
-  CheckCircle2,
   Mail,
   Phone,
   MapPin,
@@ -13,20 +9,10 @@ import {
   Percent,
   FileCheck,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import OfferingsSection from "@/components/OfferingsSection";
 import HeroSection from "@/components/HeroSection";
 
 export default function Home() {
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    setSubmitted(true);
-  };
-
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground selection:bg-foreground selection:text-background">
       {/* Top System Notice Bar */}
@@ -193,55 +179,6 @@ export default function Home() {
               </p>
             </div>
           </div>
-        </section>
-
-        {/* ACCREDITED INVESTOR COMMUNITY WAITLIST */}
-        <section
-          id="waitlist"
-          className="rounded-2xl border border-border bg-card p-8 sm:p-12 space-y-6 text-center max-w-2xl mx-auto"
-        >
-          <div className="space-y-2">
-            <span className="text-[10.5px] font-mono font-bold uppercase tracking-widest text-muted-foreground">
-              04 / SYNDICATE ACCESS
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              Request Syndicate Membership
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
-              Receive confidential deal memorandums, priority allocation notices, and quarterly portfolio reports.
-            </p>
-          </div>
-
-          {submitted ? (
-            <div className="flex items-center justify-center gap-2 text-xs font-mono text-emerald-600 dark:text-emerald-400 font-semibold py-4 border border-emerald-500/20 bg-emerald-500/10 rounded-lg">
-              <CheckCircle2 className="size-4" />
-              <span>Inquiry received. Our investor relations desk will be in touch with accreditation steps.</span>
-            </div>
-          ) : (
-            <form
-              onSubmit={handleSubmit}
-              className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto"
-            >
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="investor@domain.com"
-                className="h-11 flex-1 rounded-lg border border-input bg-background px-4 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
-              />
-              <Button
-                type="submit"
-                className="h-11 px-6 rounded-lg font-semibold uppercase tracking-wider text-xs bg-foreground text-background hover:bg-foreground/90 shrink-0 cursor-pointer"
-              >
-                Join Waitlist
-              </Button>
-            </form>
-          )}
-
-          <p className="text-[10.5px] text-muted-foreground font-mono">
-            Restricted to verified accredited investors under SEC Rule 506(c).
-          </p>
         </section>
 
         {/* OFFICE & DIRECT COMMUNICATIONS */}

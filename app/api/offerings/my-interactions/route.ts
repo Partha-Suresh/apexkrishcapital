@@ -39,34 +39,37 @@ export async function GET() {
       verificationStatus = "verified";
     }
 
-    if (!dbUser) {
-      return NextResponse.json({
-        isSignedIn: true,
-        verificationStatus: isAdmin ? "verified" : "unregistered",
-        interactions: {},
-      });
-    }
-
-    const commitments = await Commitment.find({
-      userId: dbUser._id,
-      status: "active",
-    }).lean();
+    const isProfileSaved = !!(
+      dbUser &&
+      dbUser.firstName &&
+      dbUser.lastName &&
+      dbUser.phoneNumber &&
+      dbUser.investorStatus
+    );
 
     const interactionsMap: Record<
       string,
       { type: "interest" | "commitment"; amount?: number | null }
     > = {};
 
-    commitments.forEach((item) => {
-      interactionsMap[item.offeringId] = {
-        type: item.type,
-        amount: item.amount,
-      };
-    });
+    if (dbUser) {
+      const commitments = await Commitment.find({
+        userId: dbUser._id,
+        status: "active",
+      }).lean();
+
+      commitments.forEach((item) => {
+        interactionsMap[item.offeringId] = {
+          type: item.type,
+          amount: item.amount,
+        };
+      });
+    }
 
     return NextResponse.json({
       isSignedIn: true,
       verificationStatus,
+      isProfileSaved,
       interactions: interactionsMap,
     });
   } catch (error: any) {

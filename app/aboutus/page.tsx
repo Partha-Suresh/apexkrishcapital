@@ -97,10 +97,10 @@ export default function AboutPage() {
             Ready to explore active SPV syndications?
           </p>
           <Link
-            href="/#waitlist"
+            href="/#offerings"
             className="inline-flex h-9 px-5 rounded-full bg-primary text-primary-foreground text-xs font-semibold uppercase tracking-wider items-center justify-center hover:bg-primary/90 transition shadow-xs"
           >
-            Join Waitlist
+            Explore Active Offerings
           </Link>
         </div>
       </main>

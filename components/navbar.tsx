@@ -12,9 +12,7 @@ import { Menu, X, ArrowUpRight } from "lucide-react";
 
 const navItems = [
   { label: "Offerings", href: "/#offerings" },
-  { label: "Focus", href: "/#focus" },
   { label: "About Us", href: "/aboutus" },
-  { label: "Waitlist", href: "/#waitlist" },
 ];
 
 export default function Navbar() {
@@ -73,7 +71,15 @@ export default function Navbar() {
             <div className="flex items-center gap-3">
               {isLoaded ? (
                 isSignedIn ? (
-                  <DropdownMenuAvatar img_url={user?.imageUrl} />
+                  <div className="flex items-center gap-2.5">
+                    <Link
+                      href="/profile"
+                      className="hidden sm:inline-flex text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Investor Profile
+                    </Link>
+                    <DropdownMenuAvatar img_url={user?.imageUrl} />
+                  </div>
                 ) : (
                   <div className="flex items-center gap-3">
                     <Link
@@ -82,12 +88,12 @@ export default function Navbar() {
                     >
                       Log in
                     </Link>
-                    <a
-                      href="#waitlist"
+                    <Link
+                      href="/profile"
                       className="flex h-9 items-center justify-center rounded-[12px] bg-primary px-4 text-[13px] font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98] shadow-xs whitespace-nowrap"
                     >
-                      Join Waitlist
-                    </a>
+                      Investor Profile
+                    </Link>
                   </div>
                 )
               ) : (
@@ -182,13 +188,13 @@ export default function Navbar() {
                   >
                     Log In
                   </Link>
-                  <a
-                    href="#waitlist"
+                  <Link
+                    href="/profile"
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex h-11 w-full items-center justify-center rounded-xl bg-primary text-[14px] font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
                   >
-                    Join Investor Community
-                  </a>
+                    Investor Profile
+                  </Link>
                 </div>
               )}
             </div>
