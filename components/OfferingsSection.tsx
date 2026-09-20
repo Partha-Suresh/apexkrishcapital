@@ -169,55 +169,54 @@ export default function OfferingsSection({
   const micro1Interaction = interactions["micro1-inc"];
 
   return (
-    <section id="offerings" className="space-y-10 py-12 scroll-mt-24">
+    <section id="offerings" className="space-y-8 py-6 scroll-mt-24">
       {/* Header & Filter Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 border-b border-border/70 pb-6">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1 text-[11px] font-mono font-semibold uppercase tracking-wider text-muted-foreground shadow-xs">
-            <Activity className="size-3.5 text-primary" />
-            Syndicate Allocations
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border pb-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 font-mono text-[10.5px] font-bold uppercase tracking-widest text-muted-foreground">
+            <span>01 / PRIVATE SYNDICATE</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
-            Private Market Offerings
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            Current & Past Offerings
           </h2>
-          <p className="text-sm text-muted-foreground max-w-xl">
-            Curated special purpose vehicles and direct secondary equity investments in high-conviction frontier technology companies.
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-xl">
+            Direct SPV allocations into high-conviction frontier technology growth rounds.
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="inline-flex rounded-full border border-border bg-muted/50 p-1 self-start sm:self-auto">
+        <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 self-start sm:self-auto font-mono text-xs">
           <button
             onClick={() => setActiveTab("current")}
             className={cn(
-              "flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold transition-all cursor-pointer",
+              "flex items-center gap-2 rounded-md px-3.5 py-1.5 font-medium transition cursor-pointer",
               activeTab === "current"
-                ? "bg-background text-foreground shadow-xs"
+                ? "bg-card text-foreground font-semibold shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-            Current Offerings (1)
+            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Current Deal (1)
           </button>
           <button
             onClick={() => setActiveTab("past")}
             className={cn(
-              "flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold transition-all cursor-pointer",
+              "flex items-center gap-2 rounded-md px-3.5 py-1.5 font-medium transition cursor-pointer",
               activeTab === "past"
-                ? "bg-background text-foreground shadow-xs"
+                ? "bg-card text-foreground font-semibold shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            Past Offerings (3)
+            Past Deals (3)
           </button>
         </div>
       </div>
 
       {/* Global Success Banner */}
       {successMessage && (
-        <div className="animate-in fade-in slide-in-from-top-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-800 dark:text-emerald-300 flex items-center gap-3">
-          <CheckCircle2 className="size-5 shrink-0 text-emerald-500" />
-          <p className="text-sm font-medium">{successMessage}</p>
+        <div className="animate-in fade-in slide-in-from-top-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-800 dark:text-emerald-300 flex items-center gap-3 font-mono text-xs">
+          <CheckCircle2 className="size-4 shrink-0 text-emerald-500" />
+          <p className="font-medium">{successMessage}</p>
         </div>
       )}
 
@@ -225,22 +224,22 @@ export default function OfferingsSection({
       {activeTab === "current" && (
         <div className="space-y-6">
           {/* Main Micro1 Card */}
-          <div className="rounded-[28px] border border-border bg-card text-card-foreground p-6 sm:p-9 shadow-sm transition-all hover:shadow-md relative overflow-hidden">
+          <div className="rounded-2xl border border-border bg-card text-card-foreground p-6 sm:p-8 shadow-xs relative">
             {/* Top Badge Strip */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-6 border-b border-border/80">
-              <div className="flex items-center gap-2.5">
-                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-semibold uppercase tracking-wider border border-emerald-500/20">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-border font-mono text-xs">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20 uppercase tracking-wider text-[10.5px]">
                   <span className="size-1.5 rounded-full bg-emerald-500" />
                   Active Offering
                 </span>
-                <span className="px-3 py-1 rounded-full bg-muted/60 text-muted-foreground text-xs font-mono font-medium">
+                <span className="px-2.5 py-0.5 rounded border border-border bg-muted/30 text-muted-foreground text-[10.5px] uppercase">
                   Direct SPV Equity
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <Calendar className="size-3.5" />
-                <span>Deadline: <strong className="text-foreground font-semibold">Sept 30th, 2026</strong></span>
+                <span>Closing: <strong className="text-foreground font-semibold">Sept 30, 2026</strong></span>
               </div>
             </div>
 
@@ -419,87 +418,87 @@ export default function OfferingsSection({
 
       {/* TAB CONTENT: PAST OFFERINGS */}
       {activeTab === "past" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Scale AI */}
-          <div className="rounded-3xl border border-border bg-card text-card-foreground p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded bg-muted text-muted-foreground">
-                Series F Allocation
+          <div className="rounded-xl border border-border bg-card text-card-foreground p-5 shadow-xs space-y-3">
+            <div className="flex items-center justify-between pb-2.5 border-b border-border font-mono text-xs">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-muted/60 text-muted-foreground border border-border">
+                Series F SPV
               </span>
-              <span className="text-xs font-mono font-semibold text-muted-foreground">
-                Closed / Fully Funded
+              <span className="text-muted-foreground">
+                Funded
               </span>
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-foreground">Scale AI</h3>
+              <h3 className="text-lg font-bold text-foreground">Scale AI</h3>
               <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                 Foundational AI data infrastructure & model validation platform. Direct SPV secondary syndicate.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-2 pt-2 text-center text-xs">
-              <div className="rounded-xl bg-muted/40 p-2.5">
-                <span className="text-[10px] font-mono uppercase text-muted-foreground">Valuation</span>
-                <p className="font-semibold text-foreground">$14.0B</p>
+            <div className="grid grid-cols-2 gap-2 pt-1 text-center font-mono text-xs">
+              <div className="rounded-lg bg-muted/30 border border-border/60 p-2">
+                <span className="text-[10px] uppercase text-muted-foreground block">Valuation</span>
+                <p className="font-bold text-foreground">$14.0B</p>
               </div>
-              <div className="rounded-xl bg-muted/40 p-2.5">
-                <span className="text-[10px] font-mono uppercase text-muted-foreground">Status</span>
-                <p className="font-semibold text-emerald-600 dark:text-emerald-400">Completed</p>
+              <div className="rounded-lg bg-muted/30 border border-border/60 p-2">
+                <span className="text-[10px] uppercase text-muted-foreground block">Status</span>
+                <p className="font-bold text-emerald-600 dark:text-emerald-400">Distributed</p>
               </div>
             </div>
           </div>
 
           {/* xAI */}
-          <div className="rounded-3xl border border-border bg-card text-card-foreground p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded bg-muted text-muted-foreground">
-                Series B Allocation
+          <div className="rounded-xl border border-border bg-card text-card-foreground p-5 shadow-xs space-y-3">
+            <div className="flex items-center justify-between pb-2.5 border-b border-border font-mono text-xs">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-muted/60 text-muted-foreground border border-border">
+                Series B SPV
               </span>
-              <span className="text-xs font-mono font-semibold text-muted-foreground">
-                Closed / Fully Funded
+              <span className="text-muted-foreground">
+                Funded
               </span>
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-foreground">xAI</h3>
+              <h3 className="text-lg font-bold text-foreground">xAI</h3>
               <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                 Frontier artificial intelligence research, Grok models, and high-performance supercomputing clusters.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-2 pt-2 text-center text-xs">
-              <div className="rounded-xl bg-muted/40 p-2.5">
-                <span className="text-[10px] font-mono uppercase text-muted-foreground">Valuation</span>
-                <p className="font-semibold text-foreground">$24.0B</p>
+            <div className="grid grid-cols-2 gap-2 pt-1 text-center font-mono text-xs">
+              <div className="rounded-lg bg-muted/30 border border-border/60 p-2">
+                <span className="text-[10px] uppercase text-muted-foreground block">Valuation</span>
+                <p className="font-bold text-foreground">$24.0B</p>
               </div>
-              <div className="rounded-xl bg-muted/40 p-2.5">
-                <span className="text-[10px] font-mono uppercase text-muted-foreground">Status</span>
-                <p className="font-semibold text-emerald-600 dark:text-emerald-400">Completed</p>
+              <div className="rounded-lg bg-muted/30 border border-border/60 p-2">
+                <span className="text-[10px] uppercase text-muted-foreground block">Status</span>
+                <p className="font-bold text-emerald-600 dark:text-emerald-400">Distributed</p>
               </div>
             </div>
           </div>
 
           {/* Neuralink */}
-          <div className="rounded-3xl border border-border bg-card text-card-foreground p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded bg-muted text-muted-foreground">
+          <div className="rounded-xl border border-border bg-card text-card-foreground p-5 shadow-xs space-y-3">
+            <div className="flex items-center justify-between pb-2.5 border-b border-border font-mono text-xs">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-muted/60 text-muted-foreground border border-border">
                 Direct SPV
               </span>
-              <span className="text-xs font-mono font-semibold text-muted-foreground">
-                Closed / Fully Funded
+              <span className="text-muted-foreground">
+                Funded
               </span>
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-foreground">Neuralink</h3>
+              <h3 className="text-lg font-bold text-foreground">Neuralink</h3>
               <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                 Brain-computer interface (BCI) technology restoring autonomy and pioneering human-AI integration.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-2 pt-2 text-center text-xs">
-              <div className="rounded-xl bg-muted/40 p-2.5">
-                <span className="text-[10px] font-mono uppercase text-muted-foreground">Valuation</span>
-                <p className="font-semibold text-foreground">$7.0B</p>
+            <div className="grid grid-cols-2 gap-2 pt-1 text-center font-mono text-xs">
+              <div className="rounded-lg bg-muted/30 border border-border/60 p-2">
+                <span className="text-[10px] uppercase text-muted-foreground block">Valuation</span>
+                <p className="font-bold text-foreground">$7.0B</p>
               </div>
-              <div className="rounded-xl bg-muted/40 p-2.5">
-                <span className="text-[10px] font-mono uppercase text-muted-foreground">Status</span>
-                <p className="font-semibold text-emerald-600 dark:text-emerald-400">Completed</p>
+              <div className="rounded-lg bg-muted/30 border border-border/60 p-2">
+                <span className="text-[10px] uppercase text-muted-foreground block">Status</span>
+                <p className="font-bold text-emerald-600 dark:text-emerald-400">Distributed</p>
               </div>
             </div>
           </div>
@@ -508,15 +507,15 @@ export default function OfferingsSection({
 
       {/* COMMIT CAPITAL MODAL */}
       {commitModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-[28px] border border-border bg-card text-card-foreground p-6 sm:p-8 shadow-2xl space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-border">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-card text-card-foreground p-6 sm:p-7 shadow-xl space-y-5 font-sans">
+            <div className="flex items-center justify-between pb-3 border-b border-border font-mono">
               <div>
-                <span className="text-xs font-mono font-semibold uppercase tracking-wider text-muted-foreground">
-                  Capital Commitment
+                <span className="text-[10.5px] uppercase tracking-wider text-muted-foreground font-bold">
+                  CAPITAL COMMITMENT
                 </span>
-                <h3 className="text-xl font-semibold text-foreground mt-0.5">
-                  Micro1 Inc. SPV
+                <h3 className="text-lg font-bold text-foreground mt-0.5">
+                  Micro1 Inc. SPV Series
                 </h3>
               </div>
               <button

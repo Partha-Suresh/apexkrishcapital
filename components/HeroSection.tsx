@@ -3,74 +3,68 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  Sparkles,
   ArrowRight,
-  ShieldCheck,
-  TrendingUp,
-  Building2,
-  Lock,
-  Layers,
-  Activity,
-  DollarSign,
-  Percent,
-  CheckCircle2,
   ArrowUpRight,
+  CheckCircle2,
   Scale,
-  Calendar,
-  Zap,
+  Activity,
+  Layers,
+  ShieldCheck,
+  Percent,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export default function HeroSection() {
-  const [activeTab, setActiveTab] = useState<"spv" | "comparison" | "structure">("spv");
-  const [gainAmount, setGainAmount] = useState<number>(100000);
+  const [activeTab, setActiveTab] = useState<"allocation" | "carry_ledger" | "spv_mechanics">("allocation");
+  const [simulatedGain, setSimulatedGain] = useState<number>(100000);
 
-  // Calculations for carry comparison
-  const standardFee = Math.round(gainAmount * 0.20);
-  const apexFee = Math.round(gainAmount * 0.10);
-  const investorKeepsStandard = gainAmount - standardFee;
-  const investorKeepsApex = gainAmount - apexFee;
-  const netSavings = standardFee - apexFee;
+  // Fee calculations
+  const peCarry = Math.round(simulatedGain * 0.20);
+  const apexCarry = Math.round(simulatedGain * 0.10);
+  const netSavings = peCarry - apexCarry;
+  const lpApexTakehome = simulatedGain - apexCarry;
+  const lpPeTakehome = simulatedGain - peCarry;
 
   return (
-    <section className="relative pt-6 sm:pt-10 pb-8 space-y-12">
-      {/* BACKGROUND ACCENTS & RADIAL GLOW (NO generic AI blobs, crisp geometric light) */}
-      <div className="pointer-events-none absolute inset-x-0 -top-20 -z-10 flex justify-center overflow-hidden">
-        <div className="h-[400px] w-[700px] rounded-full bg-gradient-to-b from-emerald-500/10 via-primary/5 to-transparent blur-3xl opacity-70 dark:opacity-40" />
-      </div>
-
-      {/* HERO COPY & CONVERSION HEADLINE */}
-      <div className="text-center space-y-6 max-w-3xl mx-auto">
-        {/* Top Eyebrow Badge */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1 text-[11px] font-mono font-semibold tracking-wide text-emerald-700 dark:text-emerald-400 shadow-xs">
-          <Zap className="size-3.5 fill-emerald-500 text-emerald-500" />
-          <span>10% CARRY FEE · HALF THE 20%+ INDUSTRY STANDARD</span>
+    <section className="relative pt-4 sm:pt-8 pb-4 space-y-10">
+      {/* EDITORIAL HERO HEADER */}
+      <div className="space-y-6 max-w-3xl">
+        {/* Monospace Metadata Tag */}
+        <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded border border-border bg-muted/60 text-foreground font-semibold">
+            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            DIRECT SPV ALLOCATIONS
+          </span>
+          <span className="text-border">/</span>
+          <span>10% PERFORMANCE CARRY</span>
+          <span className="text-border">/</span>
+          <span>SEC RULE 506(C)</span>
         </div>
 
-        {/* Conversion Headline */}
-        <h1 className="text-4xl sm:text-6xl font-bold tracking-[-0.035em] text-foreground leading-[1.12]">
-          Invest in top tech companies.{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-foreground via-foreground/90 to-emerald-600 dark:to-emerald-400">
-            Keep 50% more of your upside.
+        {/* High-Contrast Conversion Headline */}
+        <h1 className="text-4xl sm:text-6xl font-semibold tracking-[-0.04em] text-foreground leading-[1.08]">
+          Frontier private tech investments.{" "}
+          <span className="text-muted-foreground font-normal">
+            At half the industry carry fee.
           </span>
         </h1>
 
-        {/* Narrative & Value Proposition */}
-        <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          While larger players in the private equity market charge fees upwards of 20% of profits, we charge half of that. You leave it to us to secure your allocations in high-conviction frontier companies.
+        {/* Narrative Value Proposition */}
+        <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl font-normal">
+          While larger players in the private equity market charge fees upwards of 20% of profits, we charge half of that (10% carry). You leave it to us to source, diligience, and structure direct allocations into the right companies.
         </p>
 
-        {/* High-Impact Action CTAs */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+        {/* High-Intent CTAs */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
           <Button
             asChild
             size="lg"
-            className="w-full sm:w-auto h-12 px-7 rounded-full font-semibold text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all cursor-pointer group"
+            className="h-12 px-7 rounded-full font-semibold text-xs uppercase tracking-wider bg-foreground text-background hover:bg-foreground/90 transition-all cursor-pointer group shadow-xs"
           >
             <a href="#offerings" className="flex items-center justify-center gap-2">
               Explore Active Allocations
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
             </a>
           </Button>
 
@@ -78,324 +72,275 @@ export default function HeroSection() {
             asChild
             variant="outline"
             size="lg"
-            className="w-full sm:w-auto h-12 px-7 rounded-full font-semibold text-xs uppercase tracking-wider border-border/80 hover:bg-muted cursor-pointer"
+            className="h-12 px-7 rounded-full font-semibold text-xs uppercase tracking-wider border-border hover:bg-muted cursor-pointer"
           >
             <a href="#waitlist">Join Accredited Syndicate</a>
           </Button>
         </div>
 
-        {/* Micro-Trust Footnote */}
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-1 text-[11px] font-mono text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="size-3.5 text-emerald-500" />
-            SEC Rule 506(c) Ring-Fenced SPVs
-          </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="size-3.5 text-emerald-500" />
-            $5,000 Accessible Minimum
-          </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="size-3.5 text-emerald-500" />
-            Zero Management Fees on Direct Deals
-          </span>
+        {/* Editorial Trust Strip */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-border/70 text-xs font-mono text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold">01</span>
+            <span>10% carry (vs 20%+ PE)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold">02</span>
+            <span>$5,000 accessible min.</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold">03</span>
+            <span>Direct Delaware SPVs</span>
+          </div>
         </div>
       </div>
 
-      {/* INTERACTIVE SYNDICATE TERMINAL / ALLOCATION WINDOW (Agno & Humblytics Aesthetic) */}
-      <div className="relative mx-auto max-w-4xl rounded-3xl border border-border/80 bg-card text-card-foreground shadow-xl overflow-hidden transition-all">
-        {/* Terminal Chrome Bar */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border bg-muted/40">
+      {/* ARCHITECTURAL ALLOCATION & CARRY LEDGER (SiteInspire Aesthetic) */}
+      <div className="rounded-2xl border border-border bg-card text-card-foreground overflow-hidden shadow-xs">
+        {/* Ledger Header & Segment Selector */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 sm:px-6 py-3.5 border-b border-border bg-muted/30">
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <span className="size-3 rounded-full bg-red-500/80 inline-block" />
-              <span className="size-3 rounded-full bg-amber-500/80 inline-block" />
-              <span className="size-3 rounded-full bg-emerald-500/80 inline-block" />
-            </div>
-            <span className="text-[11px] font-mono text-muted-foreground hidden sm:inline-block ml-2">
-              apexkrishcapital.com/syndicate/terminal
+            <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground font-medium">
+              SYNDICATE TERMINAL
+            </span>
+            <span className="text-border">·</span>
+            <span className="font-mono text-xs text-foreground font-semibold">
+              ALLOCATION LEDGER
             </span>
           </div>
 
-          {/* Interactive Navigation Tabs */}
-          <div className="inline-flex rounded-xl border border-border/80 bg-background/80 p-0.5 shadow-xs">
+          {/* Segment Tabs */}
+          <div className="inline-flex rounded-lg border border-border bg-background p-0.5 self-start sm:self-auto font-mono text-xs">
             <button
-              onClick={() => setActiveTab("spv")}
+              onClick={() => setActiveTab("allocation")}
               className={cn(
-                "px-3 py-1 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer flex items-center gap-1.5",
-                activeTab === "spv"
-                  ? "bg-primary text-primary-foreground shadow-xs"
+                "px-3 py-1.5 rounded-md font-medium transition cursor-pointer flex items-center gap-1.5",
+                activeTab === "allocation"
+                  ? "bg-muted text-foreground font-semibold shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Activity className="size-3" />
-              <span>Live SPV</span>
+              <span>Current SPV: Micro1</span>
             </button>
             <button
-              onClick={() => setActiveTab("comparison")}
+              onClick={() => setActiveTab("carry_ledger")}
               className={cn(
-                "px-3 py-1 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer flex items-center gap-1.5",
-                activeTab === "comparison"
-                  ? "bg-primary text-primary-foreground shadow-xs"
+                "px-3 py-1.5 rounded-md font-medium transition cursor-pointer flex items-center gap-1.5",
+                activeTab === "carry_ledger"
+                  ? "bg-muted text-foreground font-semibold shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Scale className="size-3" />
-              <span>10% vs 20% Carry</span>
+              <span>Carry Advantage Ledger</span>
             </button>
             <button
-              onClick={() => setActiveTab("structure")}
+              onClick={() => setActiveTab("spv_mechanics")}
               className={cn(
-                "px-3 py-1 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer flex items-center gap-1.5",
-                activeTab === "structure"
-                  ? "bg-primary text-primary-foreground shadow-xs"
+                "px-3 py-1.5 rounded-md font-medium transition cursor-pointer flex items-center gap-1.5",
+                activeTab === "spv_mechanics"
+                  ? "bg-muted text-foreground font-semibold shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <ShieldCheck className="size-3" />
-              <span>SPV Structure</span>
+              <span>Legal & SPV Architecture</span>
             </button>
           </div>
         </div>
 
-        {/* Tab 1: LIVE SPV TERMINAL */}
-        {activeTab === "spv" && (
-          <div className="p-6 sm:p-8 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-border/70">
+        {/* TAB 1: CURRENT SPV TERM SHEET */}
+        {activeTab === "allocation" && (
+          <div className="p-5 sm:p-7 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10.5px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
-                    <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Live Allocation
+                <div className="flex items-center gap-2 font-mono text-xs">
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20">
+                    ● ACTIVE SYNDICATION
                   </span>
-                  <span className="text-xs font-mono text-muted-foreground">Series Secondary</span>
+                  <span className="text-muted-foreground">Series Secondary Equity</span>
                 </div>
                 <h3 className="text-2xl font-bold text-foreground">
-                  Micro1 Inc. · Direct Equity SPV
+                  Micro1 Inc.
                 </h3>
+                <p className="text-xs sm:text-sm text-muted-foreground max-w-xl leading-relaxed">
+                  AI-powered engineer vetting and global developer infrastructure. Direct equity access through isolated Apex Krish Capital SPV series.
+                </p>
               </div>
 
-              <div className="flex items-center gap-3">
-                <Button asChild size="sm" className="rounded-full text-xs font-semibold uppercase tracking-wider shadow-xs">
-                  <a href="#offerings">View Terms & Commit</a>
-                </Button>
-              </div>
+              <Button asChild size="sm" className="rounded-full text-xs font-semibold uppercase tracking-wider shrink-0">
+                <a href="#offerings">View Deal Room</a>
+              </Button>
             </div>
 
-            {/* Metrics Dashboard Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="rounded-2xl border border-border/80 bg-muted/30 p-4">
-                <span className="text-[10px] font-mono uppercase text-muted-foreground block">
+            {/* Financial Terms Table */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border rounded-xl overflow-hidden border border-border">
+              <div className="bg-card p-4 space-y-1">
+                <span className="text-[10.5px] font-mono uppercase tracking-wider text-muted-foreground block">
                   Pre-Money Valuation
                 </span>
-                <p className="text-xl font-bold text-foreground mt-1 tabular-nums">$3.7B</p>
-                <span className="text-[10px] text-muted-foreground font-mono">Institutional round</span>
+                <p className="text-xl font-bold text-foreground tabular-nums">$3.7B</p>
+                <span className="text-[10px] text-muted-foreground font-mono">Institutional valuation</span>
               </div>
 
-              <div className="rounded-2xl border border-border/80 bg-muted/30 p-4">
-                <span className="text-[10px] font-mono uppercase text-muted-foreground block">
-                  Carry Performance Fee
+              <div className="bg-card p-4 space-y-1">
+                <span className="text-[10.5px] font-mono uppercase tracking-wider text-muted-foreground block">
+                  Performance Carry
                 </span>
-                <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">10%</p>
-                <span className="text-[10px] text-muted-foreground font-mono">vs 20%+ standard</span>
+                <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">10%</p>
+                <span className="text-[10px] text-muted-foreground font-mono">50% below PE standard</span>
               </div>
 
-              <div className="rounded-2xl border border-border/80 bg-muted/30 p-4">
-                <span className="text-[10px] font-mono uppercase text-muted-foreground block">
-                  Minimum Check
+              <div className="bg-card p-4 space-y-1">
+                <span className="text-[10.5px] font-mono uppercase tracking-wider text-muted-foreground block">
+                  Minimum Commitment
                 </span>
-                <p className="text-xl font-bold text-foreground mt-1 tabular-nums">$5,000</p>
-                <span className="text-[10px] text-muted-foreground font-mono">Accessible entry</span>
+                <p className="text-xl font-bold text-foreground tabular-nums">$5,000</p>
+                <span className="text-[10px] text-muted-foreground font-mono">USD accredited entry</span>
               </div>
 
-              <div className="rounded-2xl border border-border/80 bg-muted/30 p-4">
-                <span className="text-[10px] font-mono uppercase text-muted-foreground block">
-                  Funding Deadline
+              <div className="bg-card p-4 space-y-1">
+                <span className="text-[10.5px] font-mono uppercase tracking-wider text-muted-foreground block">
+                  Closing Deadline
                 </span>
-                <p className="text-xl font-bold text-foreground mt-1">Sept 30, 2026</p>
-                <span className="text-[10px] text-muted-foreground font-mono">Target: $125K cap</span>
+                <p className="text-xl font-bold text-foreground">Sept 30, 2026</p>
+                <span className="text-[10px] text-muted-foreground font-mono">$125K allocation cap</span>
               </div>
             </div>
 
-            {/* Live Progress Bar & Syndicate Note */}
-            <div className="rounded-2xl border border-border/80 bg-muted/20 p-4 space-y-2">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-muted-foreground">Syndicate Allocation Capacity:</span>
-                <span className="font-semibold text-foreground">$125,000 Cap (Strict Allocation)</span>
+            {/* Capacity Footnote */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-1 font-mono text-xs text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <span className="size-1.5 rounded-full bg-emerald-500" />
+                <span>Allocation limit: $125,000 USD (Accredited verification required to commit)</span>
               </div>
-              <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 w-[42%]" />
-              </div>
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
-                <span>Direct cap table entry via ring-fenced Delaware SPV</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-medium">Allocations filling on verified basis</span>
-              </div>
+              <a href="#offerings" className="text-foreground hover:underline inline-flex items-center gap-1 font-semibold">
+                Go to commitment form <ArrowUpRight className="size-3" />
+              </a>
             </div>
           </div>
         )}
 
-        {/* Tab 2: CARRY COMPARISON CALCULATOR */}
-        {activeTab === "comparison" && (
-          <div className="p-6 sm:p-8 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-border/70">
+        {/* TAB 2: CARRY ADVANTAGE LEDGER (Real Numbers) */}
+        {activeTab === "carry_ledger" && (
+          <div className="p-5 sm:p-7 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
               <div>
                 <h3 className="text-xl font-bold text-foreground">
-                  The 10% Carry Advantage Calculator
+                  The 10% vs. 20%+ Carry Breakdown
                 </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  See how much more capital stays in your portfolio compared to traditional 20%+ private equity funds.
+                <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                  Direct capital impact on standard venture and private equity exit gains
                 </p>
               </div>
-              <div className="inline-flex rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-emerald-700 dark:text-emerald-400 text-xs font-mono font-bold">
-                +{netSavings.toLocaleString()} USD Kept
+
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-mono text-xs font-bold">
+                +${netSavings.toLocaleString()} USD Kept by LP
               </div>
             </div>
 
-            {/* Profit Gain Preset Selector */}
+            {/* Capital Gain Selectors */}
             <div className="space-y-2">
-              <label className="text-xs font-mono uppercase text-muted-foreground block">
-                Simulated Net Capital Gain on Deal:
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {[50000, 100000, 250000, 500000].map((val) => (
+              <span className="text-xs font-mono uppercase text-muted-foreground block">
+                Select Example Exit Profit Gain:
+              </span>
+              <div className="flex flex-wrap gap-2 font-mono">
+                {[50000, 100000, 250000, 500000].map((amount) => (
                   <button
-                    key={val}
-                    onClick={() => setGainAmount(val)}
+                    key={amount}
+                    onClick={() => setSimulatedGain(amount)}
                     className={cn(
-                      "px-3.5 py-1.5 rounded-xl border text-xs font-mono font-semibold transition-all cursor-pointer",
-                      gainAmount === val
-                        ? "border-primary bg-primary text-primary-foreground shadow-xs"
+                      "px-3 py-1 rounded border text-xs transition cursor-pointer font-medium",
+                      simulatedGain === amount
+                        ? "border-foreground bg-foreground text-background font-semibold"
                         : "border-border bg-muted/40 text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    ${val.toLocaleString()} Gain
+                    ${amount.toLocaleString()} Net Gain
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Comparison Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-              {/* Traditional PE 20% */}
-              <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono uppercase font-semibold text-destructive">
-                    Standard Private Equity
-                  </span>
-                  <span className="text-xs font-mono font-bold text-destructive">20% Carry</span>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold text-foreground tabular-nums">
-                    ${investorKeepsStandard.toLocaleString()}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground font-mono">
-                    Net investor return (${standardFee.toLocaleString()} paid in fees)
-                  </p>
-                </div>
+            {/* Ledger Breakdown Table */}
+            <div className="rounded-xl border border-border overflow-hidden text-xs font-mono">
+              <div className="grid grid-cols-3 bg-muted/60 p-3 font-semibold text-muted-foreground border-b border-border uppercase tracking-wider text-[10.5px]">
+                <div>Metric</div>
+                <div>Traditional PE (20% Carry)</div>
+                <div className="text-emerald-600 dark:text-emerald-400">Apex Krish Capital (10% Carry)</div>
               </div>
 
-              {/* Apex Krish 10% */}
-              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono uppercase font-semibold text-emerald-700 dark:text-emerald-400">
-                    Apex Krish Capital
-                  </span>
-                  <span className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400">10% Carry</span>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">
-                    ${investorKeepsApex.toLocaleString()}
-                  </p>
-                  <p className="text-[11px] text-emerald-800 dark:text-emerald-300/80 font-mono">
-                    Net investor return (${apexFee.toLocaleString()} paid in fees · 50% savings)
-                  </p>
+              <div className="grid grid-cols-3 p-3 border-b border-border/60 bg-card items-center">
+                <div className="text-muted-foreground">Deal Profit Realized</div>
+                <div className="font-semibold text-foreground">${simulatedGain.toLocaleString()}</div>
+                <div className="font-semibold text-foreground">${simulatedGain.toLocaleString()}</div>
+              </div>
+
+              <div className="grid grid-cols-3 p-3 border-b border-border/60 bg-card items-center">
+                <div className="text-muted-foreground">Performance Fee Deducted</div>
+                <div className="text-destructive font-semibold">-${peCarry.toLocaleString()} (20%)</div>
+                <div className="text-emerald-600 dark:text-emerald-400 font-semibold">-${apexCarry.toLocaleString()} (10%)</div>
+              </div>
+
+              <div className="grid grid-cols-3 p-3 bg-muted/20 items-center font-bold">
+                <div className="text-foreground">Net Profit in Your Pocket</div>
+                <div className="text-muted-foreground text-sm">${lpPeTakehome.toLocaleString()}</div>
+                <div className="text-emerald-600 dark:text-emerald-400 text-sm">
+                  ${lpApexTakehome.toLocaleString()} (+${netSavings.toLocaleString()})
                 </div>
               </div>
             </div>
 
-            <p className="text-[11px] text-muted-foreground text-center font-mono">
-              On every \$100,000 of profit, you keep an extra \$10,000 with Apex Krish Capital.
+            <p className="text-[11px] font-mono text-muted-foreground">
+              By reducing carry from 20% to 10%, you retain an additional \$10,000 on every \$100,000 of investment profit.
             </p>
           </div>
         )}
 
-        {/* Tab 3: SPV STRUCTURE & INTEGRITY */}
-        {activeTab === "structure" && (
-          <div className="p-6 sm:p-8 space-y-5">
-            <div className="pb-3 border-b border-border/70">
+        {/* TAB 3: SPV LEGAL STRUCTURE */}
+        {activeTab === "spv_mechanics" && (
+          <div className="p-5 sm:p-7 space-y-5">
+            <div className="pb-3 border-b border-border">
               <h3 className="text-xl font-bold text-foreground">
-                Institutional SPV Architecture
+                Fiduciary & SPV Mechanics
               </h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Every deal is ring-fenced to ensure zero cross-collateralization and complete tax transparency.
+              <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                Institutional legal architecture designed for clean liability segregation
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-              <div className="rounded-2xl border border-border/80 bg-muted/30 p-4 space-y-2">
-                <div className="w-8 h-8 rounded-lg bg-background flex items-center justify-center text-primary shadow-xs">
-                  <Layers className="size-4" />
-                </div>
-                <h4 className="text-sm font-semibold text-foreground">Delaware Series LLC</h4>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Isolated balance sheet per investment. Bankruptcy-remote legal structure protecting LP assets.
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              <div className="p-4 rounded-xl border border-border bg-muted/20 space-y-2">
+                <span className="font-mono text-[10.5px] font-bold text-muted-foreground uppercase tracking-wider block">
+                  Structure
+                </span>
+                <h4 className="font-bold text-foreground text-sm">Delaware Series LLC</h4>
+                <p className="text-muted-foreground leading-relaxed">
+                  Each company offering is isolated inside a dedicated series. Assets and liabilities are legally ring-fenced with zero cross-fund contamination.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-border/80 bg-muted/30 p-4 space-y-2">
-                <div className="w-8 h-8 rounded-lg bg-background flex items-center justify-center text-primary shadow-xs">
-                  <ShieldCheck className="size-4" />
-                </div>
-                <h4 className="text-sm font-semibold text-foreground">Direct Cap Table Rights</h4>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Pass-through economic interest directly mirroring institutional Series preferred shares.
+              <div className="p-4 rounded-xl border border-border bg-muted/20 space-y-2">
+                <span className="font-mono text-[10.5px] font-bold text-muted-foreground uppercase tracking-wider block">
+                  Cap Table
+                </span>
+                <h4 className="font-bold text-foreground text-sm">Direct Economic Pass-Through</h4>
+                <p className="text-muted-foreground leading-relaxed">
+                  LPs receive pro-rata beneficial ownership matching institutional preferred stock with direct liquidation preference pass-throughs.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-border/80 bg-muted/30 p-4 space-y-2">
-                <div className="w-8 h-8 rounded-lg bg-background flex items-center justify-center text-primary shadow-xs">
-                  <Percent className="size-4" />
-                </div>
-                <h4 className="text-sm font-semibold text-foreground">10% Carry Alignment</h4>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  We only profit when you profit. No multi-tier management fee drag or hidden administrative marks.
+              <div className="p-4 rounded-xl border border-border bg-muted/20 space-y-2">
+                <span className="font-mono text-[10.5px] font-bold text-muted-foreground uppercase tracking-wider block">
+                  Alignment
+                </span>
+                <h4 className="font-bold text-foreground text-sm">Pure Carry Model</h4>
+                <p className="text-muted-foreground leading-relaxed">
+                  Zero management fees on direct syndicated SPVs. We only generate revenue when our syndicated investors generate net profits.
                 </p>
               </div>
             </div>
           </div>
         )}
       </div>
-
-      {/* METRIC STRIP / PROOF TICKER */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto text-center">
-        <div className="rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
-          <p className="text-2xl sm:text-3xl font-bold text-foreground tabular-nums">10%</p>
-          <p className="text-[10.5px] font-mono uppercase tracking-wider text-muted-foreground mt-1">
-            Performance Carry Fee
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
-          <p className="text-2xl sm:text-3xl font-bold text-foreground tabular-nums">$5,000</p>
-          <p className="text-[10.5px] font-mono uppercase tracking-wider text-muted-foreground mt-1">
-            Accessible Min. Check
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
-          <p className="text-2xl sm:text-3xl font-bold text-foreground tabular-nums">$120M+</p>
-          <p className="text-[10.5px] font-mono uppercase tracking-wider text-muted-foreground mt-1">
-            Curated Deal Flow
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
-          <p className="text-2xl sm:text-3xl font-bold text-foreground tabular-nums">100%</p>
-          <p className="text-[10.5px] font-mono uppercase tracking-wider text-muted-foreground mt-1">
-            Ring-Fenced Delaware SPVs
-          </p>
-        </div>
-      </div>
     </section>
   );
 }
-

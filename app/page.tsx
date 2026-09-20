@@ -3,17 +3,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  Bot,
-  Cpu,
-  Dna,
   CheckCircle2,
   Mail,
   Phone,
   MapPin,
-  ShieldCheck,
-  TrendingUp,
+  ArrowUpRight,
+  Shield,
   Layers,
-  Award,
+  Percent,
+  FileCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import OfferingsSection from "@/components/OfferingsSection";
@@ -30,153 +28,199 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
-      {/* Test Build Header Notice */}
+    <div className="flex flex-col min-h-screen bg-background text-foreground selection:bg-foreground selection:text-background">
+      {/* Top System Notice Bar */}
       <div className="pt-24 sm:pt-28 pb-2 text-center">
-        <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1 text-[10.5px] font-mono font-medium text-muted-foreground shadow-xs">
+        <span className="inline-flex items-center gap-2 rounded border border-border bg-muted/40 px-3 py-1 text-[10.5px] font-mono font-medium text-muted-foreground uppercase tracking-wider">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          APEX KRISH CAPITAL · FRONTIER TECHNOLOGY SYNDICATE
+          APEX KRISH CAPITAL · PRIVATE MARKET SYNDICATE
         </span>
       </div>
 
       {/* Main Container */}
-      <main className="mx-auto w-full max-w-[960px] px-4 sm:px-6 py-4 space-y-20">
+      <main className="mx-auto w-full max-w-[960px] px-4 sm:px-6 py-4 space-y-24">
         {/* CONVERSION-OPTIMIZED HERO SECTION */}
         <HeroSection />
 
         {/* OFFERINGS SECTION (CURRENT: Micro1 Inc. & PAST OFFERINGS) */}
         <OfferingsSection />
 
-        {/* CORE FOCUS SECTORS */}
-        <section id="focus" className="space-y-8">
-          <div className="text-center space-y-2">
-            <span className="text-xs font-mono font-semibold uppercase tracking-wider text-muted-foreground">
-              CORE SECTORS
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
-              Where We Invest
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-              Our investment thesis focuses on transformative platform technologies that reshape industries and compound enterprise value.
+        {/* CORE INVESTMENT THESIS & SECTOR INDEX (SiteInspire Editorial Architecture) */}
+        <section id="focus" className="space-y-8 pt-4">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border pb-4">
+            <div className="space-y-1">
+              <span className="text-[10.5px] font-mono font-bold uppercase tracking-widest text-muted-foreground">
+                02 / RESEARCH THESIS
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                Sectors of Conviction
+              </h2>
+            </div>
+            <p className="text-xs font-mono text-muted-foreground max-w-sm">
+              Disciplined focus on asymmetric platform shifts across intelligence, computing, and biotechnology.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <div className="rounded-3xl border border-border bg-card text-card-foreground p-6 space-y-3.5 shadow-xs hover:border-primary/40 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-foreground">
-                <Bot className="w-5 h-5" />
+          <div className="space-y-px bg-border rounded-xl overflow-hidden border border-border">
+            {/* Sector 01 */}
+            <div className="bg-card p-6 sm:p-7 hover:bg-muted/30 transition-all flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+              <div className="space-y-2 max-w-xl">
+                <div className="flex items-center gap-3 font-mono text-xs text-muted-foreground">
+                  <span className="font-bold text-foreground">01</span>
+                  <span className="text-border">/</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider">
+                    Intelligence & Autonomous Agents
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold text-foreground">
+                  Foundation Architectures & Applied AI Infrastructure
+                </h3>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  Backing category-leading teams building synthetic data pipelines, verified coding agents, autonomous developer infrastructure, and enterprise AI engines.
+                </p>
               </div>
-              <h3 className="text-base font-semibold text-card-foreground">Artificial Intelligence</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                Foundation models, synthetic data pipelines, enterprise developer engines, and next-gen agentic workflows.
-              </p>
+
+              <div className="sm:text-right shrink-0 space-y-1 font-mono text-xs text-muted-foreground">
+                <span className="text-[10px] uppercase tracking-wider block text-muted-foreground">Historical & Live Marks</span>
+                <span className="font-semibold text-foreground">Micro1 · Scale AI · xAI</span>
+              </div>
             </div>
 
-            <div className="rounded-3xl border border-border bg-card text-card-foreground p-6 space-y-3.5 shadow-xs hover:border-primary/40 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-foreground">
-                <Cpu className="w-5 h-5" />
+            {/* Sector 02 */}
+            <div className="bg-card p-6 sm:p-7 hover:bg-muted/30 transition-all flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+              <div className="space-y-2 max-w-xl">
+                <div className="flex items-center gap-3 font-mono text-xs text-muted-foreground">
+                  <span className="font-bold text-foreground">02</span>
+                  <span className="text-border">/</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider">
+                    Hardware & Scale
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold text-foreground">
+                  Accelerated Computing & Silicon Systems
+                </h3>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  Next-generation datacenter interconnects, specialized ASIC accelerators, optical compute, and thermal architecture scaling massive cluster density.
+                </p>
               </div>
-              <h3 className="text-base font-semibold text-card-foreground">Advanced Computing</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                Specialized silicon accelerators, optical interconnects, cloud hardware, and supercomputing infrastructure.
-              </p>
+
+              <div className="sm:text-right shrink-0 space-y-1 font-mono text-xs text-muted-foreground">
+                <span className="text-[10px] uppercase tracking-wider block text-muted-foreground">Focus Stage</span>
+                <span className="font-semibold text-foreground">Series B through Pre-IPO</span>
+              </div>
             </div>
 
-            <div className="rounded-3xl border border-border bg-card text-card-foreground p-6 space-y-3.5 shadow-xs hover:border-primary/40 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-foreground">
-                <Dna className="w-5 h-5" />
+            {/* Sector 03 */}
+            <div className="bg-card p-6 sm:p-7 hover:bg-muted/30 transition-all flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+              <div className="space-y-2 max-w-xl">
+                <div className="flex items-center gap-3 font-mono text-xs text-muted-foreground">
+                  <span className="font-bold text-foreground">03</span>
+                  <span className="text-border">/</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider">
+                    Frontier Science
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold text-foreground">
+                  Neural Interfaces & Computational Therapeutics
+                </h3>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  Pioneering brain-computer interfaces (BCI), algorithmic small molecule discovery, genetic engineering, and neuro-restorative technologies.
+                </p>
               </div>
-              <h3 className="text-base font-semibold text-card-foreground">Biotechnology & Neurotech</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                Algorithmic drug discovery, genomic editing, neurotechnology, and computational therapeutics.
-              </p>
+
+              <div className="sm:text-right shrink-0 space-y-1 font-mono text-xs text-muted-foreground">
+                <span className="text-[10px] uppercase tracking-wider block text-muted-foreground">Historical Marks</span>
+                <span className="font-semibold text-foreground">Neuralink SPV</span>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* INVESTMENT PHILOSOPHY & PILLARS */}
-        <section className="rounded-3xl border border-border bg-card text-card-foreground p-7 sm:p-10 shadow-xs space-y-8">
-          <div className="space-y-2">
-            <span className="text-xs font-mono font-semibold uppercase tracking-wider text-muted-foreground">
-              OUR APPROACH
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
-              Disciplined Research & Curated Access
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
-              At Apex Krish Capital, we combine rigorous research methodologies with deep industry access to deliver institutional-grade private equity opportunities to accredited individuals and family offices.
+        {/* FIDUCIARY ARCHITECTURE & STANDARDS */}
+        <section className="space-y-8 pt-4">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border pb-4">
+            <div className="space-y-1">
+              <span className="text-[10.5px] font-mono font-bold uppercase tracking-widest text-muted-foreground">
+                03 / STRUCTURAL INTEGRITY
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                Fiduciary & Execution Standards
+              </h2>
+            </div>
+            <p className="text-xs font-mono text-muted-foreground max-w-sm">
+              How we protect syndicate members and ensure clean, institutional-grade equity ownership.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="rounded-2xl border border-border/80 bg-muted/40 p-5 space-y-2">
-              <div className="flex items-center gap-2.5 font-semibold text-sm text-foreground">
-                <ShieldCheck className="size-4 text-primary" />
-                <span>Rigorous Due Diligence</span>
+            <div className="rounded-xl border border-border bg-card p-6 space-y-3">
+              <div className="flex items-center gap-2 font-mono text-xs text-foreground font-semibold">
+                <FileCheck className="size-4 text-emerald-600 dark:text-emerald-400" />
+                <span>Rigorous Secondary Diligence</span>
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Every deal undergoes comprehensive financial, legal, and operational screening before being structured for investor syndication.
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                Direct verification of board approvals, company right-of-first-refusal (ROFR) waivers, capitalization table standings, and transfer restriction mechanics prior to capital calls.
               </p>
             </div>
 
-            <div className="rounded-2xl border border-border/80 bg-muted/40 p-5 space-y-2">
-              <div className="flex items-center gap-2.5 font-semibold text-sm text-foreground">
-                <Layers className="size-4 text-primary" />
-                <span>Ring-Fenced SPVs</span>
+            <div className="rounded-xl border border-border bg-card p-6 space-y-3">
+              <div className="flex items-center gap-2 font-mono text-xs text-foreground font-semibold">
+                <Layers className="size-4 text-emerald-600 dark:text-emerald-400" />
+                <span>Delaware Ring-Fenced SPVs</span>
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Each opportunity is isolated inside a dedicated Special Purpose Vehicle, ensuring clean liability separation and transparent reporting.
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                Every deal is isolated in its own Delaware Series LLC. Each vehicle is bankruptcy-remote, completely insulating your capital from other portfolio investments.
               </p>
             </div>
 
-            <div className="rounded-2xl border border-border/80 bg-muted/40 p-5 space-y-2">
-              <div className="flex items-center gap-2.5 font-semibold text-sm text-foreground">
-                <TrendingUp className="size-4 text-primary" />
-                <span>Direct Equity Rights</span>
+            <div className="rounded-xl border border-border bg-card p-6 space-y-3">
+              <div className="flex items-center gap-2 font-mono text-xs text-foreground font-semibold">
+                <Percent className="size-4 text-emerald-600 dark:text-emerald-400" />
+                <span>10% Pure Carry Alignment</span>
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Investors gain direct economic participation in premier late-stage growth rounds alongside Tier-1 venture capital firms.
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                We charge zero management fees on direct SPVs and cap our carry fee at 10%—half the standard 20%+ fee. Our economic upside is strictly tied to your net realized gain.
               </p>
             </div>
 
-            <div className="rounded-2xl border border-border/80 bg-muted/40 p-5 space-y-2">
-              <div className="flex items-center gap-2.5 font-semibold text-sm text-foreground">
-                <Award className="size-4 text-primary" />
-                <span>Fiduciary Integrity</span>
+            <div className="rounded-xl border border-border bg-card p-6 space-y-3">
+              <div className="flex items-center gap-2 font-mono text-xs text-foreground font-semibold">
+                <Shield className="size-4 text-emerald-600 dark:text-emerald-400" />
+                <span>SEC 506(c) Compliance</span>
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Uncompromising alignment of interest, continuous portfolio updates, and prompt distribution management.
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                All allocations are strictly structured under SEC Rule 506(c) exemptions for verified accredited individuals, family offices, and qualified institutional buyers.
               </p>
             </div>
           </div>
         </section>
 
-        {/* INVESTOR COMMUNITY / WAITLIST FORM */}
+        {/* ACCREDITED INVESTOR COMMUNITY WAITLIST */}
         <section
           id="waitlist"
-          className="rounded-3xl border border-border bg-muted/40 p-7 sm:p-10 text-center space-y-5"
+          className="rounded-2xl border border-border bg-card p-8 sm:p-12 space-y-6 text-center max-w-2xl mx-auto"
         >
           <div className="space-y-2">
-            <span className="text-xs font-mono font-semibold uppercase tracking-wider text-muted-foreground">
-              JOIN THE SYNDICATE
+            <span className="text-[10.5px] font-mono font-bold uppercase tracking-widest text-muted-foreground">
+              04 / SYNDICATE ACCESS
             </span>
-            <h2 className="text-xl sm:text-3xl font-semibold tracking-tight text-foreground">
-              Join Our Accredited Investor Community
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+              Request Syndicate Membership
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
-              Receive priority access to upcoming SPV syndications, allocation updates, and confidential quarterly research briefings.
+              Receive confidential deal memorandums, priority allocation notices, and quarterly portfolio reports.
             </p>
           </div>
 
           {submitted ? (
-            <div className="flex items-center justify-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 font-medium py-3">
-              <CheckCircle2 className="w-5 h-5" />
-              <span>Thank you for your submission. Our investor relations team will reach out shortly.</span>
+            <div className="flex items-center justify-center gap-2 text-xs font-mono text-emerald-600 dark:text-emerald-400 font-semibold py-4 border border-emerald-500/20 bg-emerald-500/10 rounded-lg">
+              <CheckCircle2 className="size-4" />
+              <span>Inquiry received. Our investor relations desk will be in touch with accreditation steps.</span>
             </div>
           ) : (
             <form
               onSubmit={handleSubmit}
-              className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto pt-2"
+              className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto"
             >
               <input
                 type="email"
@@ -184,47 +228,47 @@ export default function Home() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="investor@domain.com"
-                className="h-11 flex-1 rounded-full border border-input bg-background px-4 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                className="h-11 flex-1 rounded-lg border border-input bg-background px-4 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
               />
               <Button
                 type="submit"
-                className="h-11 px-6 rounded-full font-semibold uppercase tracking-wider text-xs shadow-xs shrink-0 cursor-pointer"
+                className="h-11 px-6 rounded-lg font-semibold uppercase tracking-wider text-xs bg-foreground text-background hover:bg-foreground/90 shrink-0 cursor-pointer"
               >
                 Join Waitlist
               </Button>
             </form>
           )}
 
-          <p className="text-[11px] text-muted-foreground font-mono">
-            SEC Rule 506(c) accredited investors only. Subject to verification.
+          <p className="text-[10.5px] text-muted-foreground font-mono">
+            Restricted to verified accredited investors under SEC Rule 506(c).
           </p>
         </section>
 
-        {/* CONTACT & OFFICE DETAILS */}
-        <section className="rounded-3xl border border-border bg-card text-card-foreground p-6 sm:p-8 text-xs text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-5 shadow-xs">
-          <div className="flex items-center gap-2.5 font-mono">
-            <Mail className="w-4 h-4 text-muted-foreground" />
+        {/* OFFICE & DIRECT COMMUNICATIONS */}
+        <section className="rounded-xl border border-border bg-card p-6 sm:p-8 text-xs font-mono text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-5">
+          <div className="flex items-center gap-2">
+            <Mail className="size-4 text-muted-foreground" />
             <a href="mailto:info@apexkrishcapital.com" className="text-foreground hover:underline">
               info@apexkrishcapital.com
             </a>
           </div>
-          <div className="flex items-center gap-2.5 font-mono">
-            <Phone className="w-4 h-4 text-muted-foreground" />
+          <div className="flex items-center gap-2">
+            <Phone className="size-4 text-muted-foreground" />
             <a href="tel:+17208456839" className="text-foreground hover:underline">
               +1 (720) 845-6839
             </a>
           </div>
-          <div className="flex items-center gap-2.5 font-mono text-muted-foreground">
-            <MapPin className="w-4 h-4 text-muted-foreground" />
+          <div className="flex items-center gap-2">
+            <MapPin className="size-4 text-muted-foreground" />
             <span className="text-foreground">New York, NY 10001</span>
           </div>
         </section>
       </main>
 
       {/* FOOTER */}
-      <footer className="mt-auto border-t border-border bg-background py-10 px-4 text-center text-xs text-muted-foreground space-y-3">
+      <footer className="mt-auto border-t border-border bg-background py-10 px-4 text-center text-xs font-mono text-muted-foreground space-y-3">
         <p>© {new Date().getFullYear()} Apex Krish Capital. All Rights Reserved.</p>
-        <p className="text-[11px] max-w-xl mx-auto leading-relaxed">
+        <p className="text-[11px] max-w-xl mx-auto leading-relaxed text-muted-foreground/80">
           Apex Krish Capital provides private market investment opportunities exclusively to accredited investors under SEC Rule 506(c). Past performance is not indicative of future results. Private market securities involve substantial risk of loss.
         </p>
       </footer>
