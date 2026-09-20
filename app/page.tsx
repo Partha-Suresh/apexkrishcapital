@@ -12,15 +12,12 @@ import {
   MapPin,
   ShieldCheck,
   TrendingUp,
-  Sparkles,
-  ArrowRight,
-  Lock,
-  Building,
   Layers,
   Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import OfferingsSection from "@/components/OfferingsSection";
+import HeroSection from "@/components/HeroSection";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -43,52 +40,9 @@ export default function Home() {
       </div>
 
       {/* Main Container */}
-      <main className="mx-auto w-full max-w-[920px] px-4 sm:px-6 py-6 space-y-20">
-        {/* HERO SECTION */}
-        <section className="text-center space-y-6 pt-4 pb-2">
-          <div className="space-y-4 max-w-3xl mx-auto">
-            <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight text-foreground leading-[1.12]">
-              Invest in Tomorrow’s Innovations
-            </h1>
-            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Apex Krish Capital identifies and curates high-conviction private market investments across artificial intelligence, biotechnology, and advanced computing for accredited investors.
-            </p>
-          </div>
-
-          {/* Action CTAs */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-            <Button asChild className="h-11 px-7 rounded-full font-semibold text-xs tracking-wider uppercase shadow-xs">
-              <a href="#offerings">Explore Offerings</a>
-            </Button>
-            <Button asChild variant="outline" className="h-11 px-7 rounded-full font-semibold text-xs tracking-wider uppercase">
-              <a href="#waitlist">Join Investor Community</a>
-            </Button>
-          </div>
-
-          {/* Stats / Credentials Strip */}
-          <div className="grid grid-cols-3 gap-3 pt-8 max-w-2xl mx-auto text-center">
-            <div className="rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
-              <p className="text-2xl sm:text-3xl font-bold text-foreground tabular-nums">$120M+</p>
-              <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mt-1">
-                Curated Deal Volume
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
-              <p className="text-2xl sm:text-3xl font-bold text-foreground tabular-nums">$3.7B+</p>
-              <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mt-1">
-                Avg. Co. Valuation
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
-              <p className="text-2xl sm:text-3xl font-bold text-foreground tabular-nums">100%</p>
-              <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mt-1">
-                Direct SPV Isolation
-              </p>
-            </div>
-          </div>
-        </section>
+      <main className="mx-auto w-full max-w-[960px] px-4 sm:px-6 py-4 space-y-20">
+        {/* CONVERSION-OPTIMIZED HERO SECTION */}
+        <HeroSection />
 
         {/* OFFERINGS SECTION (CURRENT: Micro1 Inc. & PAST OFFERINGS) */}
         <OfferingsSection />
