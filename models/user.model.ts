@@ -64,12 +64,7 @@ const userSchema = new Schema<IUserDocument>(
   { timestamps: true }
 );
 
-userSchema.pre("save", function (next) {
-  if (this.role === "admin") {
-    this.verificationStatus = "verified";
-  }
-  next();
-});
+
 
 if (mongoose.models && mongoose.models.User) {
   if (
