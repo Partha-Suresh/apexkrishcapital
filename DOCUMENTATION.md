@@ -218,18 +218,21 @@ flowchart TD
 
 ### 6.4 Administrative Operations & Deal Room (`components/AdminPage.tsx`)
 
-Dual-tab operational suite built exclusively for syndicate managers:
+Multi-deal portfolio command center built for syndicate managers and SPV administrators:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│  APEX KRISH CAPITAL — SYNDICATE OPERATIONS DESK                        │
+│  APEX KRISH CAPITAL — MULTI-OPPORTUNITY PORTFOLIO COMMAND              │
 ├────────────────────────────────────────────────────────────────────────┤
-│  [ Registered Investors (Tab 1) ]    [ Deal Commitments (Tab 2) ]     │
+│  [ Deal Opportunities & Commitments (Tab 1) ] [ Investor Directory ]   │
 ├────────────────────────────────────────────────────────────────────────┤
-│  • Investor Directory with Phone Numbers, Email, Accreditation Status  │
-│  • Inline Verification Status Switcher (Pending / Verified / Rejected)  │
-│  • Live Aggregate Pipeline ($ Amount Committed, Total Investor Count)  │
-│  • Direct Contact Export for Wire Instructions & Subscription Packets  │
+│  • Multi-Deal Opportunity Carousel with Real-Time Cap Progress Bars    │
+│  • Instant Deal Filtering (All Deals / Micro1 / Scale AI / xAI, etc.) │
+│  • Live Search across Investor Name, Email, Phone, & Check Sizes       │
+│  • Multi-Criteria Status & Type Filtering ($5K+ Commitments vs Intent) │
+│  • Inline Syndicate Status Management (Active, Wire Received, Closed)  │
+│  • One-Click Syndicate Roster Export (.CSV) for Legal Closing & Wires  │
+│  • Investor Directory with Phone Numbers, Email, & Verification Action │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -299,9 +302,18 @@ Dual-tab operational suite built exclusively for syndicate managers:
 
 ### 7.5 `/api/admin/commitments`
 
-- **Methods**: `GET`
+- **Methods**: `GET`, `PATCH`
 - **Authentication**: Required (`role === 'admin'`)
-- **GET Response**: All deal commitments and interest expressions populated with investor name, email, and phone number.
+- **GET Parameters**: `?offeringId=...&type=...&status=...&search=...`
+- **GET Response**: Multi-deal breakdowns (`offerings`), global metrics (`stats`), and populated commitment records (`commitments`).
+- **PATCH Request Body**:
+  ```json
+  {
+    "id": "66ed84...",
+    "status": "wire_received",
+    "notes": "Wire confirmed by escrow"
+  }
+  ```
 
 ---
 

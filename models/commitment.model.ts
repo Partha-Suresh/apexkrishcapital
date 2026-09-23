@@ -8,7 +8,8 @@ export interface ICommitment {
   offeringTitle: string;
   type: "interest" | "commitment";
   amount?: number | null;
-  status: "active" | "cancelled";
+  status: "active" | "wire_received" | "allocated" | "cancelled";
+  notes?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -21,6 +22,7 @@ const commitmentSchema = new Schema<ICommitmentDocument>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
     userEmail: {
       type: String,
@@ -37,6 +39,7 @@ const commitmentSchema = new Schema<ICommitmentDocument>(
       type: String,
       required: true,
       trim: true,
+      index: true,
     },
     offeringTitle: {
       type: String,
@@ -47,6 +50,7 @@ const commitmentSchema = new Schema<ICommitmentDocument>(
       type: String,
       enum: ["interest", "commitment"],
       required: true,
+      index: true,
     },
     amount: {
       type: Number,
@@ -54,14 +58,21 @@ const commitmentSchema = new Schema<ICommitmentDocument>(
     },
     status: {
       type: String,
-      enum: ["active", "cancelled"],
+      enum: ["active", "wire_received", "allocated", "cancelled"],
       default: "active",
+      index: true,
+    },
+    notes: {
+      type: String,
+      default: "",
     },
   },
   { timestamps: true }
 );
 
+// Compound index for fast offering aggregation & filtering
+commitmentSchema.index({ offeringId: 1, type: 1, status: 1 });
+
 // Prevent re-compilation in development HMR
 export default (mongoose.models.Commitment as Model<ICommitmentDocument>) ||
   mongoose.model<ICommitmentDocument>("Commitment", commitmentSchema);
-
