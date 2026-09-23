@@ -3,6 +3,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import User from "@/models/user.model";
 import { dbConnect } from "@/lib/dbConnect";
 import { sendProfileUpdateNotification } from "@/lib/email";
+import { investorProfileSchema } from "@/lib/validations/profile.schema";
 
 export async function GET(req: NextRequest) {
   try {
@@ -61,25 +62,49 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { firstName, middleName, lastName, phone, investorStatus, citizenship, avatar } =
-      body;
 
-    // Validate non-optional fields
-    if (!firstName?.trim()) {
-      return NextResponse.json({ error: "First name is required" }, { status: 400 });
+    // Validate payload using Zod Schema
+    const validationResult = investorProfileSchema.safeParse({
+      firstName: body.firstName,
+      middleName: body.middleName,
+      lastName: body.lastName,
+      email: email,
+      phone: body.phone,
+      investorStatus: body.investorStatus,
+      citizenship: body.citizenship,
+      avatar: body.avatar || clerkUser.imageUrl || "",
+    });
+
+    if (!validationResult.success) {
+      const issues = validationResult.error.issues || [];
+      const firstError = issues[0]?.message || "Invalid profile data.";
+      const fieldErrors: Record<string, string[]> = {};
+      issues.forEach((issue) => {
+        const fieldName = issue.path[0]?.toString();
+        if (fieldName) {
+          if (!fieldErrors[fieldName]) fieldErrors[fieldName] = [];
+          fieldErrors[fieldName].push(issue.message);
+        }
+      });
+
+      return NextResponse.json(
+        {
+          error: firstError,
+          fieldErrors,
+        },
+        { status: 400 }
+      );
     }
-    if (!lastName?.trim()) {
-      return NextResponse.json({ error: "Last name is required" }, { status: 400 });
-    }
-    if (!phone?.trim()) {
-      return NextResponse.json({ error: "Phone number is required" }, { status: 400 });
-    }
-    if (!investorStatus) {
-      return NextResponse.json({ error: "Investor status is required" }, { status: 400 });
-    }
-    if (!citizenship) {
-      return NextResponse.json({ error: "Citizenship is required" }, { status: 400 });
-    }
+
+    const {
+      firstName,
+      middleName,
+      lastName,
+      phone,
+      investorStatus,
+      citizenship,
+      avatar,
+    } = validationResult.data;
 
     const { sessionClaims } = await auth();
     const isAdmin = sessionClaims?.metadata?.role === "admin";

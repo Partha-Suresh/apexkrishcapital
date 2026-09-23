@@ -13,6 +13,11 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
+import { cn } from "@/lib/utils"
+import {
+	investorProfileSchema,
+	ProfileFormErrors,
+} from "@/lib/validations/profile.schema"
 
 type Profile = {
 	firstName: string
@@ -58,6 +63,7 @@ export default function ProfilePage() {
 	const [saving, setSaving] = useState(false)
 	const [saved, setSaved] = useState(false)
 	const [error, setError] = useState<string | null>(null)
+	const [fieldErrors, setFieldErrors] = useState<ProfileFormErrors>({})
 	const [hoveredStatus, setHoveredStatus] = useState<HoveredStatusInfo | null>(null)
 	const [mounted, setMounted] = useState(false)
 
@@ -175,55 +181,83 @@ export default function ProfilePage() {
 	function handleChange(e: ChangeEvent<HTMLInputElement>) {
 		const { name, value } = e.target
 		setError(null)
+		setFieldErrors((prev) => {
+			const updated = { ...prev }
+			delete updated[name as keyof ProfileFormErrors]
+			return updated
+		})
 		setProfile((p) => ({ ...p, [name]: value }))
 	}
 
 	async function handleSave() {
-		// Non-optional validation
-		if (!profile.firstName.trim()) {
-			setError("First name is required.")
-			return
-		}
-		if (!profile.lastName.trim()) {
-			setError("Last name is required.")
-			return
-		}
-		if (!profile.phone.trim()) {
-			setError("Phone number is required.")
-			return
-		}
-		if (!profile.investorStatus) {
-			setError("Accredited investor status is required.")
-			return
-		}
-		if (!profile.citizenship) {
-			setError("Citizenship is required.")
-			return
-		}
-
-		setSaving(true)
-		setError(null)
+		const emailAddress =
+			user?.primaryEmailAddress?.emailAddress ||
+			user?.emailAddresses?.[0]?.emailAddress ||
+			""
 
 		const avatarUrl = user?.imageUrl || profile.avatar || "/usericon.webp"
+
+		// Zod Client Validation
+		const validationResult = investorProfileSchema.safeParse({
+			firstName: profile.firstName,
+			middleName: profile.middleName,
+			lastName: profile.lastName,
+			email: emailAddress,
+			phone: profile.phone,
+			investorStatus: profile.investorStatus,
+			citizenship: profile.citizenship,
+			avatar: avatarUrl,
+		})
+
+		if (!validationResult.success) {
+			const errors: ProfileFormErrors = {}
+			const issues = validationResult.error.issues || []
+			issues.forEach((issue) => {
+				const field = issue.path[0] as keyof ProfileFormErrors
+				if (field && !errors[field]) {
+					errors[field] = issue.message
+				}
+			})
+			setFieldErrors(errors)
+			setError(
+				issues[0]?.message ||
+					"Please correct the errors in the form before saving."
+			)
+			return
+		}
+
+		setFieldErrors({})
+		setError(null)
+		setSaving(true)
 
 		try {
 			const res = await fetch("/api/user/profile", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
-					firstName: profile.firstName,
-					middleName: profile.middleName,
-					lastName: profile.lastName,
-					phone: profile.phone,
+					firstName: profile.firstName.trim(),
+					middleName: profile.middleName?.trim() || "",
+					lastName: profile.lastName.trim(),
+					phone: profile.phone.trim(),
 					investorStatus: profile.investorStatus,
 					citizenship: profile.citizenship,
 					avatar: avatarUrl,
 				}),
 			})
 
+			const data = await res.json()
+
 			if (!res.ok) {
-				const errData = await res.json()
-				throw new Error(errData.error || "Failed to save profile to database")
+				if (data.fieldErrors) {
+					const serverFieldErrors: ProfileFormErrors = {}
+					Object.entries(data.fieldErrors).forEach(([k, msgs]: [string, any]) => {
+						if (Array.isArray(msgs) && msgs.length > 0) {
+							serverFieldErrors[k as keyof ProfileFormErrors] = msgs[0]
+						}
+					})
+					setFieldErrors(serverFieldErrors)
+				}
+				throw new Error(data.error || "Failed to save profile to database")
 			}
 
 			// Also backup to localStorage
@@ -322,8 +356,19 @@ export default function ProfilePage() {
 										value={profile.firstName}
 										onChange={handleChange}
 										placeholder="e.g. Partha"
-										className="w-full h-11 px-4 rounded-xl border border-input bg-background text-sm font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring transition"
+										className={cn(
+											"w-full h-11 px-4 rounded-xl border bg-background text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 transition",
+											fieldErrors.firstName
+												? "border-destructive focus:ring-destructive"
+												: "border-input focus:border-primary focus:ring-ring"
+										)}
 									/>
+									{fieldErrors.firstName && (
+										<p className="text-[11px] font-mono text-destructive mt-1 flex items-center gap-1">
+											<AlertCircle className="size-3 shrink-0" />
+											{fieldErrors.firstName}
+										</p>
+									)}
 								</div>
 
 								<div>
@@ -335,8 +380,19 @@ export default function ProfilePage() {
 										value={profile.middleName}
 										onChange={handleChange}
 										placeholder="Optional"
-										className="w-full h-11 px-4 rounded-xl border border-input bg-background text-sm font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring transition"
+										className={cn(
+											"w-full h-11 px-4 rounded-xl border bg-background text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 transition",
+											fieldErrors.middleName
+												? "border-destructive focus:ring-destructive"
+												: "border-input focus:border-primary focus:ring-ring"
+										)}
 									/>
+									{fieldErrors.middleName && (
+										<p className="text-[11px] font-mono text-destructive mt-1 flex items-center gap-1">
+											<AlertCircle className="size-3 shrink-0" />
+											{fieldErrors.middleName}
+										</p>
+									)}
 								</div>
 							</div>
 
@@ -350,8 +406,38 @@ export default function ProfilePage() {
 									value={profile.lastName}
 									onChange={handleChange}
 									placeholder="e.g. Suresh"
-									className="w-full h-11 px-4 rounded-xl border border-input bg-background text-sm font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring transition"
+									className={cn(
+										"w-full h-11 px-4 rounded-xl border bg-background text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 transition",
+										fieldErrors.lastName
+											? "border-destructive focus:ring-destructive"
+											: "border-input focus:border-primary focus:ring-ring"
+									)}
 								/>
+								{fieldErrors.lastName && (
+									<p className="text-[11px] font-mono text-destructive mt-1 flex items-center gap-1">
+										<AlertCircle className="size-3 shrink-0" />
+										{fieldErrors.lastName}
+									</p>
+								)}
+							</div>
+
+							<div>
+								<label className="block text-xs font-mono uppercase tracking-wider text-muted-foreground mb-1.5">
+									Email Address
+								</label>
+								<input
+									type="email"
+									disabled
+									value={
+										user?.primaryEmailAddress?.emailAddress ||
+										user?.emailAddresses?.[0]?.emailAddress ||
+										""
+									}
+									className="w-full h-11 px-4 rounded-xl border border-input bg-muted/40 text-sm font-medium text-muted-foreground cursor-not-allowed select-none font-mono"
+								/>
+								<p className="text-[11px] text-muted-foreground mt-1 font-mono">
+									Verified email linked to your account.
+								</p>
 							</div>
 
 							<div>
@@ -360,12 +446,24 @@ export default function ProfilePage() {
 								</label>
 								<input
 									name="phone"
+									type="tel"
 									required
 									value={profile.phone}
 									onChange={handleChange}
 									placeholder="+1 (555) 000-0000"
-									className="w-full h-11 px-4 rounded-xl border border-input bg-background text-sm font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring transition"
+									className={cn(
+										"w-full h-11 px-4 rounded-xl border bg-background text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 transition font-mono",
+										fieldErrors.phone
+											? "border-destructive focus:ring-destructive"
+											: "border-input focus:border-primary focus:ring-ring"
+									)}
 								/>
+								{fieldErrors.phone && (
+									<p className="text-[11px] font-mono text-destructive mt-1.5 flex items-center gap-1">
+										<AlertCircle className="size-3 shrink-0" />
+										{fieldErrors.phone}
+									</p>
+								)}
 							</div>
 
 							{/* Non-Optional Feature 1: Accredited investor status */}
@@ -377,6 +475,11 @@ export default function ProfilePage() {
 									value={profile.investorStatus}
 									onValueChange={(val) => {
 										setError(null)
+										setFieldErrors((prev) => {
+											const next = { ...prev }
+											delete next.investorStatus
+											return next
+										})
 										setProfile((p) => ({ ...p, investorStatus: val }))
 										setHoveredStatus(null)
 									}}
@@ -384,7 +487,7 @@ export default function ProfilePage() {
 										if (!open) setHoveredStatus(null)
 									}}
 								>
-									<SelectTrigger className="w-full">
+									<SelectTrigger className={cn("w-full", fieldErrors.investorStatus && "border-destructive")}>
 										<SelectValue placeholder="Select investor status" />
 									</SelectTrigger>
 									<SelectContent>
@@ -409,9 +512,16 @@ export default function ProfilePage() {
 										))}
 									</SelectContent>
 								</Select>
-								<p className="text-[11px] text-muted-foreground mt-1.5 font-mono">
-									Required under SEC Rule 506(c) private placements.
-								</p>
+								{fieldErrors.investorStatus ? (
+									<p className="text-[11px] font-mono text-destructive mt-1.5 flex items-center gap-1">
+										<AlertCircle className="size-3 shrink-0" />
+										{fieldErrors.investorStatus}
+									</p>
+								) : (
+									<p className="text-[11px] text-muted-foreground mt-1.5 font-mono">
+										Required under SEC Rule 506(c) private placements.
+									</p>
+								)}
 							</div>
 
 							{/* Non-Optional Feature 2: Citizenship */}
@@ -423,10 +533,15 @@ export default function ProfilePage() {
 									value={profile.citizenship}
 									onValueChange={(val) => {
 										setError(null)
+										setFieldErrors((prev) => {
+											const next = { ...prev }
+											delete next.citizenship
+											return next
+										})
 										setProfile((p) => ({ ...p, citizenship: val }))
 									}}
 								>
-									<SelectTrigger className="w-full">
+									<SelectTrigger className={cn("w-full", fieldErrors.citizenship && "border-destructive")}>
 										<SelectValue placeholder="Select citizenship" />
 									</SelectTrigger>
 									<SelectContent>
@@ -434,6 +549,12 @@ export default function ProfilePage() {
 										<SelectItem value="Non-US">Non US Citizen</SelectItem>
 									</SelectContent>
 								</Select>
+								{fieldErrors.citizenship && (
+									<p className="text-[11px] font-mono text-destructive mt-1.5 flex items-center gap-1">
+										<AlertCircle className="size-3 shrink-0" />
+										{fieldErrors.citizenship}
+									</p>
+								)}
 							</div>
 						</div>
 
