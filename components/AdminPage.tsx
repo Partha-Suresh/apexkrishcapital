@@ -27,6 +27,20 @@ import {
   SlidersHorizontal,
   Check,
   ChevronRight,
+  ChevronLeft,
+  Send,
+  MessageSquare,
+  ExternalLink,
+  Copy,
+  CheckCheck,
+  Mail,
+  Link2,
+  X,
+  Radio,
+  LayoutGrid,
+  List,
+  Archive,
+  History,
 } from 'lucide-react'
 import {
   Select,
@@ -77,7 +91,7 @@ type OfferingMetric = {
   targetAllocation: number
   minCheckSize: number
   valuation: string
-  status: 'active' | 'closing_soon' | 'funded' | 'upcoming'
+  status: 'active' | 'closing_soon' | 'funded' | 'upcoming' | string
   category: string
   committedCapital: number
   commitmentsCount: number
@@ -88,6 +102,24 @@ type OfferingMetric = {
   averageCheckSize: number
   isOversubscribed: boolean
   oversubscribedAmount: number
+}
+
+type BroadcastPreviewRecipient = {
+  userId: string
+  userName: string
+  userEmail: string
+  userPhone?: string | null
+  hasValidPhone: boolean
+  type: 'commitment' | 'interest'
+  amount?: number | null
+}
+
+type WhatsAppRosterItem = {
+  userName: string
+  userEmail: string
+  userPhone: string | null
+  whatsAppLink: string | null
+  emailStatus: string
 }
 
 function getInitials(name: string) {
@@ -162,11 +194,39 @@ export default function AdminPage() {
   const [commitmentError, setCommitmentError] = useState<string | null>(null)
   const [updatingCommitmentId, setUpdatingCommitmentId] = useState<string | null>(null)
 
-  // Filters
+  // Deal Offerings Tracker Scalability Controls
+  const [offeringFilterTab, setOfferingFilterTab] = useState<'all' | 'active' | 'past'>('all')
+  const [offeringSearchQuery, setOfferingSearchQuery] = useState('')
+  const [offeringViewMode, setOfferingViewMode] = useState<'grid' | 'table'>('grid')
+  const [offeringPage, setOfferingPage] = useState(1)
+  const offeringsPerPage = 8
+
+  // Commitments Table Filters
   const [selectedOfferingId, setSelectedOfferingId] = useState<string>('all')
   const [selectedType, setSelectedType] = useState<'all' | 'commitment' | 'interest'>('all')
   const [selectedStatus, setSelectedStatus] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Broadcast Modal State
+  const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false)
+  const [broadcastOffering, setBroadcastOffering] = useState<OfferingMetric | null>(null)
+  const [broadcastAudience, setBroadcastAudience] = useState<'all_verified' | 'commitments_only' | 'interests_only'>('all_verified')
+  const [thirdPartyUrl, setThirdPartyUrl] = useState('')
+  const [broadcastSubject, setBroadcastSubject] = useState('')
+  const [customMessage, setCustomMessage] = useState('')
+  const [sendEmail, setSendEmail] = useState(true)
+  const [sendWhatsApp, setSendWhatsApp] = useState(true)
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false)
+  const [previewRecipients, setPreviewRecipients] = useState<BroadcastPreviewRecipient[]>([])
+  const [isSendingBroadcast, setIsSendingBroadcast] = useState(false)
+  const [broadcastResult, setBroadcastResult] = useState<{
+    success: boolean
+    message: string
+    emailsSent: number
+    whatsappProcessed: number
+    whatsappRoster: WhatsAppRosterItem[]
+  } | null>(null)
+  const [copiedUrl, setCopiedUrl] = useState(false)
 
   // Fetch Users
   useEffect(() => {
@@ -231,6 +291,161 @@ export default function AdminPage() {
       isActive = false
     }
   }, [])
+
+  // Scalable Filtered Offerings List
+  const filteredOfferings = useMemo(() => {
+    return offerings.filter((deal) => {
+      // 1. Tab differentiation: active vs past vs all
+      if (offeringFilterTab === 'active') {
+        const isActive = deal.status === 'active' || deal.status === 'closing_soon' || deal.status === 'upcoming'
+        if (!isActive) return false
+      } else if (offeringFilterTab === 'past') {
+        const isPast = deal.status === 'funded' || deal.status === 'archived' || deal.status === 'closed'
+        if (!isPast) return false
+      }
+
+      // 2. Search query filter
+      if (offeringSearchQuery.trim()) {
+        const query = offeringSearchQuery.trim().toLowerCase()
+        const titleMatch = deal.title.toLowerCase().includes(query)
+        const companyMatch = deal.companyName.toLowerCase().includes(query)
+        const roundMatch = deal.roundName.toLowerCase().includes(query)
+        const categoryMatch = deal.category.toLowerCase().includes(query)
+        if (!titleMatch && !companyMatch && !roundMatch && !categoryMatch) {
+          return false
+        }
+      }
+
+      return true
+    })
+  }, [offerings, offeringFilterTab, offeringSearchQuery])
+
+  // Paginated Offerings for handling dozens/hundreds of cards gracefully
+  const totalOfferingPages = Math.ceil(filteredOfferings.length / offeringsPerPage) || 1
+  const paginatedOfferings = useMemo(() => {
+    const startIdx = (offeringPage - 1) * offeringsPerPage
+    return filteredOfferings.slice(startIdx, startIdx + offeringsPerPage)
+  }, [filteredOfferings, offeringPage, offeringsPerPage])
+
+  // Offering Counts
+  const activeOfferingsCount = useMemo(() => {
+    return offerings.filter(
+      (o) => o.status === 'active' || o.status === 'closing_soon' || o.status === 'upcoming'
+    ).length
+  }, [offerings])
+
+  const pastOfferingsCount = useMemo(() => {
+    return offerings.filter(
+      (o) => o.status === 'funded' || o.status === 'archived' || o.status === 'closed'
+    ).length
+  }, [offerings])
+
+  // Open Broadcast Modal & Load Deal Link & Preview
+  async function handleOpenBroadcastModal(offering: OfferingMetric) {
+    setBroadcastOffering(offering)
+    setBroadcastResult(null)
+    setIsBroadcastModalOpen(true)
+    setBroadcastSubject(`Priority Access: ${offering.title} SPV Subscription & Closing Portal`)
+    setCustomMessage('')
+    setIsPreviewLoading(true)
+
+    try {
+      const linkRes = await fetch(`/api/admin/offerings/${offering.offeringId}/link`, {
+        cache: 'no-store',
+      })
+      const linkData = await linkRes.json()
+      if (linkRes.ok && linkData.thirdPartyUrl) {
+        setThirdPartyUrl(linkData.thirdPartyUrl)
+      } else {
+        setThirdPartyUrl('')
+      }
+
+      await fetchBroadcastPreview(offering.offeringId, broadcastAudience)
+    } catch (err) {
+      console.error('Error opening broadcast modal:', err)
+    } finally {
+      setIsPreviewLoading(false)
+    }
+  }
+
+  // Fetch preview when audience changes
+  async function fetchBroadcastPreview(offeringId: string, audience: string) {
+    setIsPreviewLoading(true)
+    try {
+      const res = await fetch(
+        `/api/admin/broadcast?offeringId=${offeringId}&audience=${audience}`,
+        { cache: 'no-store' }
+      )
+      const data = await res.json()
+      if (res.ok) {
+        setPreviewRecipients(data.recipients || [])
+        if (data.thirdPartyUrl && !thirdPartyUrl) {
+          setThirdPartyUrl(data.thirdPartyUrl)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to preview broadcast:', err)
+    } finally {
+      setIsPreviewLoading(false)
+    }
+  }
+
+  // Handle Audience Selection Change
+  function handleAudienceChange(newAudience: 'all_verified' | 'commitments_only' | 'interests_only') {
+    setBroadcastAudience(newAudience)
+    if (broadcastOffering) {
+      fetchBroadcastPreview(broadcastOffering.offeringId, newAudience)
+    }
+  }
+
+  // Trigger Broadcast Dispatch
+  async function handleSendBroadcast() {
+    if (!broadcastOffering) return
+    if (!thirdPartyUrl.trim()) {
+      alert('Please enter a valid third-party subscription/closing portal URL.')
+      return
+    }
+
+    if (!thirdPartyUrl.startsWith('http://') && !thirdPartyUrl.startsWith('https://')) {
+      alert('The portal URL must start with https:// or http://')
+      return
+    }
+
+    if (!sendEmail && !sendWhatsApp) {
+      alert('Please select at least one delivery channel (Email or WhatsApp).')
+      return
+    }
+
+    setIsSendingBroadcast(true)
+    try {
+      const res = await fetch('/api/admin/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          offeringId: broadcastOffering.offeringId,
+          offeringTitle: broadcastOffering.title,
+          targetAudience: broadcastAudience,
+          thirdPartyUrl: thirdPartyUrl.trim(),
+          subject: broadcastSubject.trim(),
+          customMessage: customMessage.trim(),
+          sendEmail,
+          sendWhatsApp,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to dispatch broadcast.')
+      }
+
+      setBroadcastResult(data)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Broadcast failed.')
+    } finally {
+      setIsSendingBroadcast(false)
+    }
+  }
 
   // Handle Investor Verification Status Change
   async function handleVerificationChange(userId: string, newStatus: string) {
@@ -299,19 +514,15 @@ export default function AdminPage() {
   // Filtered Commitments
   const filteredCommitments = useMemo(() => {
     return commitments.filter((item) => {
-      // Offering filter
       if (selectedOfferingId !== 'all' && item.offeringId !== selectedOfferingId) {
         return false
       }
-      // Type filter
       if (selectedType !== 'all' && item.type !== selectedType) {
         return false
       }
-      // Status filter
       if (selectedStatus !== 'all' && item.status !== selectedStatus) {
         return false
       }
-      // Search query filter (name, email, phone, offeringTitle, amount)
       if (searchQuery.trim()) {
         const query = searchQuery.trim().toLowerCase()
         const nameMatch = item.userName.toLowerCase().includes(query)
@@ -409,7 +620,7 @@ export default function AdminPage() {
               Syndicate Portfolio Command
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground leading-relaxed">
-              Real-time multi-deal allocation tracking, investor qualification verification, capital commitment pipelines, and legal syndicate closing.
+              Real-time multi-deal allocation tracking, investor qualification verification, capital commitment pipelines, and verified investor multi-channel broadcasts.
             </p>
           </div>
 
@@ -417,11 +628,21 @@ export default function AdminPage() {
           <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center">
             <div className="rounded-2xl border border-border bg-card p-4 shadow-xs min-w-[140px]">
               <div className="flex items-center gap-2 text-muted-foreground text-[11px] font-mono uppercase tracking-wider">
-                <Building2 className="size-3.5 text-primary" />
+                <Building2 className="size-3.5 text-emerald-500" />
                 Active Deals
               </div>
               <p className="mt-2 text-2xl font-bold font-mono text-foreground tabular-nums">
-                {isLoadingCommitments ? '—' : offerings.filter((o) => o.status === 'active').length}
+                {isLoadingCommitments ? '—' : activeOfferingsCount}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-4 shadow-xs min-w-[140px]">
+              <div className="flex items-center gap-2 text-muted-foreground text-[11px] font-mono uppercase tracking-wider">
+                <Archive className="size-3.5 text-muted-foreground" />
+                Past Deals
+              </div>
+              <p className="mt-2 text-2xl font-bold font-mono text-muted-foreground tabular-nums">
+                {isLoadingCommitments ? '—' : pastOfferingsCount}
               </p>
             </div>
 
@@ -460,7 +681,7 @@ export default function AdminPage() {
               )}
             >
               <TrendingUp className="size-3.5" />
-              Deal Opportunities & Commitments ({commitments.length})
+              Deal Opportunities &amp; Commitments ({commitments.length})
             </button>
 
             <button
@@ -493,102 +714,405 @@ export default function AdminPage() {
         {/* TAB 1: DEAL COMMITMENTS & MULTI-OPPORTUNITY PIPELINE */}
         {activeTab === 'commitments' && (
           <div className="space-y-6">
-            {/* MULTI-DEAL CAROUSEL / GRID CARDS */}
-            <section className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">
-                  <PieChart className="size-3.5 text-primary" />
-                  Deal Allocation Tracker ({offerings.length} Opportunities)
+            {/* MULTI-DEAL ALLOCATION TRACKER: SCALABLE & DIFFERENTIATED */}
+            <section className="rounded-3xl border border-border bg-card p-5 sm:p-6 shadow-xs space-y-5">
+              {/* Top Filter & View Mode Controls */}
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between pb-4 border-b border-border/80">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">
+                    <PieChart className="size-3.5 text-primary" />
+                    Deal Portfolio Hub ({offerings.length} Total SPVs)
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Filter by active allocations or historical distributions • Click card to isolate commitment records.
+                  </p>
                 </div>
-                <span className="text-[11px] text-muted-foreground">
-                  Click any deal card to instantly filter allocations
-                </span>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {offerings.map((deal) => {
-                  const isSelected = selectedOfferingId === deal.offeringId
-                  return (
-                    <div
-                      key={deal.offeringId}
-                      onClick={() =>
-                        setSelectedOfferingId(isSelected ? 'all' : deal.offeringId)
-                      }
+                {/* Sub-Filters & View Mode Switcher */}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {/* Segmented Filter Pills */}
+                  <div className="inline-flex rounded-xl border border-border bg-muted/40 p-1 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOfferingFilterTab('all')
+                        setOfferingPage(1)
+                      }}
                       className={cn(
-                        'group relative cursor-pointer rounded-2xl border p-4 transition-all duration-200',
-                        isSelected
-                          ? 'border-primary bg-primary/5 ring-2 ring-primary/20 shadow-md'
-                          : 'border-border bg-card hover:border-primary/50 hover:bg-muted/30 shadow-xs'
+                        'px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer',
+                        offeringFilterTab === 'all'
+                          ? 'bg-background text-foreground shadow-xs font-semibold'
+                          : 'text-muted-foreground hover:text-foreground'
                       )}
                     >
-                      <div className="flex items-center justify-between pb-2 border-b border-border/60 text-xs">
-                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border">
-                          {deal.category}
-                        </span>
-                        <span
-                          className={cn(
-                            'text-[11px] font-semibold capitalize',
-                            deal.status === 'active'
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : deal.status === 'funded'
-                              ? 'text-blue-600 dark:text-blue-400'
-                              : 'text-amber-600 dark:text-amber-400'
-                          )}
-                        >
-                          {deal.status === 'closing_soon' ? 'Closing Soon' : deal.status}
-                        </span>
-                      </div>
+                      All ({offerings.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOfferingFilterTab('active')
+                        setOfferingPage(1)
+                      }}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 cursor-pointer',
+                        offeringFilterTab === 'active'
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-xs font-semibold'
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      <span className="size-1.5 rounded-full bg-emerald-500 inline-block" />
+                      Active ({activeOfferingsCount})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOfferingFilterTab('past')
+                        setOfferingPage(1)
+                      }}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 cursor-pointer',
+                        offeringFilterTab === 'past'
+                          ? 'bg-background text-foreground shadow-xs font-semibold'
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      <History className="size-3 text-muted-foreground" />
+                      Past ({pastOfferingsCount})
+                    </button>
+                  </div>
 
-                      <div className="mt-3">
-                        <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors flex items-center justify-between">
-                          <span>{deal.title}</span>
-                          {isSelected && <Check className="size-4 text-primary" />}
-                        </h3>
-                        <p className="text-xs text-muted-foreground mt-0.5 font-mono">
-                          Valuation: {deal.valuation} • Min ${deal.minCheckSize.toLocaleString()}
-                        </p>
-                      </div>
+                  {/* Offering Search */}
+                  <div className="relative w-full sm:w-[190px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                    <input
+                      type="text"
+                      placeholder="Search deals..."
+                      value={offeringSearchQuery}
+                      onChange={(e) => {
+                        setOfferingSearchQuery(e.target.value)
+                        setOfferingPage(1)
+                      }}
+                      className="w-full rounded-xl border border-border bg-background py-1.5 pl-8 pr-3 text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
 
-                      {/* Cap Fill Progress Bar */}
-                      <div className="mt-4 space-y-1.5 font-mono text-xs">
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="text-muted-foreground">Allocation Filled:</span>
-                          <span className="font-bold text-foreground tabular-nums">
-                            {deal.percentFilled}%
-                          </span>
-                        </div>
-
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                          <div
-                            className={cn(
-                              'h-full rounded-full transition-all duration-500',
-                              deal.percentFilled >= 100
-                                ? 'bg-purple-500'
-                                : deal.percentFilled >= 75
-                                ? 'bg-emerald-500'
-                                : 'bg-primary'
-                            )}
-                            style={{ width: `${Math.min(100, deal.percentFilled)}%` }}
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between text-[10.5px] text-muted-foreground pt-1">
-                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                            ${deal.committedCapital.toLocaleString()}
-                          </span>
-                          <span>Cap: ${deal.targetAllocation.toLocaleString()}</span>
-                        </div>
-                      </div>
-
-                      {/* Investor stats */}
-                      <div className="mt-3.5 pt-2.5 border-t border-border/60 flex items-center justify-between text-[11px] font-mono text-muted-foreground">
-                        <span>{deal.commitmentsCount} Checks ($5K+)</span>
-                        <span>{deal.interestsCount} Interested</span>
-                      </div>
-                    </div>
-                  )
-                })}
+                  {/* View Mode Toggle: Grid vs Table */}
+                  <div className="inline-flex rounded-xl border border-border bg-muted/40 p-1 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setOfferingViewMode('grid')}
+                      title="Card Grid View"
+                      className={cn(
+                        'p-1.5 rounded-lg transition-all cursor-pointer',
+                        offeringViewMode === 'grid'
+                          ? 'bg-background text-foreground shadow-xs'
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      <LayoutGrid className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOfferingViewMode('table')}
+                      title="Compact Table View"
+                      className={cn(
+                        'p-1.5 rounded-lg transition-all cursor-pointer',
+                        offeringViewMode === 'table'
+                          ? 'bg-background text-foreground shadow-xs'
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      <List className="size-3.5" />
+                    </button>
+                  </div>
+                </div>
               </div>
+
+              {/* VIEW 1: SCALABLE GRID VIEW */}
+              {offeringViewMode === 'grid' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {paginatedOfferings.map((deal) => {
+                    const isSelected = selectedOfferingId === deal.offeringId
+                    const isPast = deal.status === 'funded' || deal.status === 'archived' || deal.status === 'closed'
+
+                    return (
+                      <div
+                        key={deal.offeringId}
+                        className={cn(
+                          'group relative rounded-2xl border p-4.5 transition-all duration-200 flex flex-col justify-between',
+                          isPast
+                            ? 'border-border/60 bg-muted/20 opacity-90 hover:opacity-100 hover:border-border'
+                            : 'border-border bg-card shadow-xs hover:border-primary/50 hover:bg-muted/30',
+                          isSelected && 'border-primary bg-primary/5 ring-2 ring-primary/20 shadow-md'
+                        )}
+                      >
+                        <div>
+                          {/* Top Category & Differentiated Status Header */}
+                          <div
+                            onClick={() => setSelectedOfferingId(isSelected ? 'all' : deal.offeringId)}
+                            className="flex items-center justify-between pb-2.5 border-b border-border/60 text-xs cursor-pointer"
+                          >
+                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+                              {deal.category}
+                            </span>
+                            
+                            {/* Differentiated Status Badges */}
+                            {isPast ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full bg-muted/80 text-muted-foreground border border-border">
+                                <Archive className="size-2.5" />
+                                Distributed
+                              </span>
+                            ) : (
+                              <span
+                                className={cn(
+                                  'inline-flex items-center gap-1 text-[11px] font-semibold font-mono capitalize px-2 py-0.5 rounded-full border',
+                                  deal.status === 'closing_soon'
+                                    ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
+                                    : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                                )}
+                              >
+                                <span className="size-1.5 rounded-full bg-current animate-pulse" />
+                                {deal.status === 'closing_soon' ? 'Closing Soon' : 'Active SPV'}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Title & Valuation */}
+                          <div
+                            onClick={() => setSelectedOfferingId(isSelected ? 'all' : deal.offeringId)}
+                            className="mt-3 cursor-pointer"
+                          >
+                            <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors flex items-center justify-between">
+                              <span>{deal.title}</span>
+                              {isSelected && <Check className="size-4 text-primary" />}
+                            </h3>
+                            <p className="text-xs text-muted-foreground mt-0.5 font-mono">
+                              Valuation: {deal.valuation} • Min ${deal.minCheckSize.toLocaleString()}
+                            </p>
+                          </div>
+
+                          {/* Cap Fill Progress Bar for Active vs Past Summary */}
+                          <div
+                            onClick={() => setSelectedOfferingId(isSelected ? 'all' : deal.offeringId)}
+                            className="mt-4 space-y-1.5 font-mono text-xs cursor-pointer"
+                          >
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span className="text-muted-foreground">
+                                {isPast ? 'Final Raised Allocation:' : 'Allocation Filled:'}
+                              </span>
+                              <span className="font-bold text-foreground tabular-nums">
+                                {deal.percentFilled}%
+                              </span>
+                            </div>
+
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                              <div
+                                className={cn(
+                                  'h-full rounded-full transition-all duration-500',
+                                  isPast
+                                    ? 'bg-muted-foreground/60'
+                                    : deal.percentFilled >= 100
+                                    ? 'bg-purple-500'
+                                    : deal.percentFilled >= 75
+                                    ? 'bg-emerald-500'
+                                    : 'bg-primary'
+                                )}
+                                style={{ width: `${Math.min(100, deal.percentFilled)}%` }}
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between text-[10.5px] text-muted-foreground pt-1">
+                              <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                                ${deal.committedCapital.toLocaleString()}
+                              </span>
+                              <span>Target: ${deal.targetAllocation.toLocaleString()}</span>
+                            </div>
+                          </div>
+
+                          {/* Investor counts */}
+                          <div className="mt-3.5 pt-2.5 border-t border-border/60 flex items-center justify-between text-[11px] font-mono text-muted-foreground">
+                            <span>{deal.commitmentsCount} Checks ($5K+)</span>
+                            <span>{deal.interestsCount} Interested</span>
+                          </div>
+                        </div>
+
+                        {/* Differentiated Bottom Actions */}
+                        <div className="mt-3.5 pt-3 border-t border-border/60 flex items-center gap-2">
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleOpenBroadcastModal(deal)
+                            }}
+                            size="sm"
+                            variant={isPast ? 'outline' : 'default'}
+                            className={cn(
+                              'w-full h-8.5 rounded-xl text-xs font-semibold gap-1.5 shadow-xs',
+                              !isPast && 'bg-foreground text-background hover:bg-foreground/90'
+                            )}
+                          >
+                            <Send className="size-3.5" />
+                            <span>{isPast ? 'Manage Portal Link' : 'Broadcast Deal Link'}</span>
+                          </Button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* VIEW 2: HIGH-DENSITY COMPACT TABLE VIEW */}
+              {offeringViewMode === 'table' && (
+                <div className="overflow-x-auto rounded-2xl border border-border">
+                  <table className="w-full text-left font-sans text-xs">
+                    <thead className="bg-muted/40 font-mono text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                      <tr>
+                        <th className="px-4 py-3 font-medium">Offering / Company</th>
+                        <th className="px-4 py-3 font-medium">Category</th>
+                        <th className="px-4 py-3 font-medium">Valuation</th>
+                        <th className="px-4 py-3 font-medium">Target Cap</th>
+                        <th className="px-4 py-3 font-medium">Committed / Progress</th>
+                        <th className="px-4 py-3 font-medium">Participants</th>
+                        <th className="px-4 py-3 font-medium">Lifecycle Status</th>
+                        <th className="px-4 py-3 font-medium text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {paginatedOfferings.map((deal) => {
+                        const isSelected = selectedOfferingId === deal.offeringId
+                        const isPast = deal.status === 'funded' || deal.status === 'archived' || deal.status === 'closed'
+
+                        return (
+                          <tr
+                            key={deal.offeringId}
+                            onClick={() => setSelectedOfferingId(isSelected ? 'all' : deal.offeringId)}
+                            className={cn(
+                              'transition-colors cursor-pointer hover:bg-muted/30',
+                              isSelected && 'bg-primary/5 font-medium'
+                            )}
+                          >
+                            <td className="px-4 py-3.5">
+                              <div className="flex items-center gap-2">
+                                {isSelected && <Check className="size-3.5 text-primary" />}
+                                <div>
+                                  <p className="font-bold text-foreground text-sm">{deal.title}</p>
+                                  <p className="text-[11px] text-muted-foreground font-mono">{deal.roundName}</p>
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="px-4 py-3.5">
+                              <span className="font-mono text-[10.5px] px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+                                {deal.category}
+                              </span>
+                            </td>
+
+                            <td className="px-4 py-3.5 font-mono text-muted-foreground">
+                              {deal.valuation}
+                            </td>
+
+                            <td className="px-4 py-3.5 font-mono text-foreground font-semibold">
+                              ${deal.targetAllocation.toLocaleString()}
+                            </td>
+
+                            <td className="px-4 py-3.5 font-mono">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                                  ${deal.committedCapital.toLocaleString()}
+                                </span>
+                                <span className="text-muted-foreground text-[11px]">({deal.percentFilled}%)</span>
+                              </div>
+                              <div className="h-1.5 w-24 overflow-hidden rounded-full bg-muted mt-1">
+                                <div
+                                  className={cn(
+                                    'h-full rounded-full',
+                                    isPast ? 'bg-muted-foreground/60' : 'bg-primary'
+                                  )}
+                                  style={{ width: `${Math.min(100, deal.percentFilled)}%` }}
+                                />
+                              </div>
+                            </td>
+
+                            <td className="px-4 py-3.5 font-mono text-muted-foreground">
+                              <span>{deal.commitmentsCount} Checks</span>
+                              <span className="text-[10.5px] block text-muted-foreground/80">
+                                {deal.interestsCount} interested
+                              </span>
+                            </td>
+
+                            <td className="px-4 py-3.5 font-mono">
+                              {isPast ? (
+                                <span className="inline-flex items-center gap-1 text-[10.5px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+                                  Distributed
+                                </span>
+                              ) : (
+                                <span
+                                  className={cn(
+                                    'inline-flex items-center gap-1 text-[10.5px] px-2 py-0.5 rounded-full border',
+                                    deal.status === 'closing_soon'
+                                      ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
+                                      : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                                  )}
+                                >
+                                  <span className="size-1 rounded-full bg-current" />
+                                  {deal.status === 'closing_soon' ? 'Closing Soon' : 'Active'}
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="px-4 py-3.5 text-right">
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleOpenBroadcastModal(deal)
+                                }}
+                                size="sm"
+                                variant="outline"
+                                className="h-7 rounded-lg text-xs gap-1 font-medium"
+                              >
+                                <Send className="size-3" />
+                                <span>{isPast ? 'Portal Link' : 'Broadcast'}</span>
+                              </Button>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Scalability Pagination Bar */}
+              {totalOfferingPages > 1 && (
+                <div className="flex items-center justify-between pt-2 border-t border-border/80 text-xs font-mono">
+                  <span className="text-muted-foreground">
+                    Showing {(offeringPage - 1) * offeringsPerPage + 1}–
+                    {Math.min(offeringPage * offeringsPerPage, filteredOfferings.length)} of {filteredOfferings.length} deals
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setOfferingPage((p) => Math.max(1, p - 1))}
+                      disabled={offeringPage === 1}
+                      className="h-7 px-2.5 rounded-lg text-xs"
+                    >
+                      <ChevronLeft className="size-3.5" />
+                    </Button>
+                    <span className="px-2 text-foreground font-semibold">
+                      Page {offeringPage} of {totalOfferingPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setOfferingPage((p) => Math.min(totalOfferingPages, p + 1))}
+                      disabled={offeringPage === totalOfferingPages}
+                      className="h-7 px-2.5 rounded-lg text-xs"
+                    >
+                      <ChevronRight className="size-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </section>
 
             {/* FILTER & SEARCH BAR */}
@@ -599,7 +1123,7 @@ export default function AdminPage() {
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <input
                     type="text"
-                    placeholder="Search by investor name, email, phone, offering, or check amount..."
+                    placeholder="Search commitments by investor name, email, phone, offering, or check amount..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full rounded-xl border border-border bg-background py-2 pl-10 pr-4 text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -720,7 +1244,7 @@ export default function AdminPage() {
             <section className="overflow-hidden rounded-[24px] border border-border bg-card text-card-foreground shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border px-5 py-4 sm:px-6">
                 <div>
-                  <h2 className="text-sm font-semibold">Deal Commitments & Syndicate Roster</h2>
+                  <h2 className="text-sm font-semibold">Deal Commitments &amp; Syndicate Roster</h2>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     Review accredited investor commitments, update wire status, and manage allocation records.
                   </p>
@@ -1015,7 +1539,7 @@ export default function AdminPage() {
           <section className="overflow-hidden rounded-[24px] border border-border bg-card text-card-foreground shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border px-5 py-4 sm:px-6">
               <div>
-                <h2 className="text-sm font-semibold">Registered Investors & Accreditation</h2>
+                <h2 className="text-sm font-semibold">Registered Investors &amp; Accreditation</h2>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   Update verification status to grant or restrict deal participation and check commitments.
                 </p>
@@ -1242,6 +1766,350 @@ export default function AdminPage() {
               </>
             )}
           </section>
+        )}
+
+        {/* BROADCAST DEAL LINK MODAL */}
+        {isBroadcastModalOpen && broadcastOffering && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-border bg-card text-card-foreground p-6 sm:p-7 shadow-2xl space-y-6 font-sans">
+              {/* Modal Header */}
+              <div className="flex items-start justify-between pb-4 border-b border-border">
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[10.5px] font-mono font-bold uppercase text-primary">
+                    <Radio className="size-3 text-primary animate-pulse" />
+                    Broadcast Engine
+                  </div>
+                  <h3 className="text-xl font-bold text-foreground">
+                    Broadcast {broadcastOffering.title} Link
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Send unique third-party subscription and closing links to verified investors via Email and WhatsApp.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsBroadcastModalOpen(false)}
+                  className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
+              {/* SUCCESS RESULT SCREEN */}
+              {broadcastResult ? (
+                <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 text-center space-y-2">
+                    <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-500 text-white">
+                      <CheckCheck className="size-6" />
+                    </div>
+                    <h4 className="text-base font-bold text-emerald-950 dark:text-emerald-200">
+                      Broadcast Dispatched Successfully!
+                    </h4>
+                    <p className="text-xs text-emerald-800 dark:text-emerald-300 max-w-md mx-auto">
+                      {broadcastResult.message}
+                    </p>
+                    <div className="flex items-center justify-center gap-4 pt-2 font-mono text-xs">
+                      <span className="px-3 py-1 rounded-full bg-background border border-emerald-500/30 font-semibold text-emerald-600 dark:text-emerald-400">
+                        ✉️ {broadcastResult.emailsSent} Emails Sent
+                      </span>
+                      <span className="px-3 py-1 rounded-full bg-background border border-emerald-500/30 font-semibold text-emerald-600 dark:text-emerald-400">
+                        💬 {broadcastResult.whatsappProcessed} WhatsApp Links Ready
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* WhatsApp Roster for Instant Direct Chat */}
+                  {broadcastResult.whatsappRoster && broadcastResult.whatsappRoster.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-xs font-mono">
+                        <span className="font-bold uppercase tracking-wider text-muted-foreground">
+                          Direct WhatsApp Transmission Roster ({broadcastResult.whatsappRoster.length})
+                        </span>
+                        <span className="text-muted-foreground text-[11px]">
+                          Click &quot;Open WhatsApp&quot; for instant pre-filled chat
+                        </span>
+                      </div>
+
+                      <div className="max-h-52 overflow-y-auto divide-y divide-border rounded-xl border border-border bg-muted/20">
+                        {broadcastResult.whatsappRoster.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-3 text-xs">
+                            <div className="min-w-0 pr-3">
+                              <p className="font-semibold text-foreground truncate">{item.userName}</p>
+                              <p className="text-[11px] text-muted-foreground font-mono">
+                                {item.userPhone || item.userEmail}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              {item.whatsAppLink ? (
+                                <a
+                                  href={item.whatsAppLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold text-[11px] hover:bg-emerald-700 transition-colors shadow-xs"
+                                >
+                                  <MessageSquare className="size-3" />
+                                  <span>Open WhatsApp</span>
+                                  <ExternalLink className="size-2.5 opacity-70" />
+                                </a>
+                              ) : (
+                                <span className="text-[11px] text-muted-foreground font-mono">
+                                  No phone number
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-2 flex justify-end">
+                    <Button
+                      onClick={() => setIsBroadcastModalOpen(false)}
+                      className="rounded-xl text-xs font-semibold px-6"
+                    >
+                      Done
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                /* FORM STEP */
+                <div className="space-y-5">
+                  {/* Target Audience Selector */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-mono">
+                      1. Target Audience (Must be Admin-Verified)
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => handleAudienceChange('all_verified')}
+                        className={cn(
+                          'p-3 rounded-xl border text-left transition-all cursor-pointer',
+                          broadcastAudience === 'all_verified'
+                            ? 'border-primary bg-primary/10 text-primary font-semibold'
+                            : 'border-border bg-card text-muted-foreground hover:border-primary/50'
+                        )}
+                      >
+                        <p className="font-bold text-foreground">All Verified</p>
+                        <p className="text-[10.5px] text-muted-foreground mt-0.5">
+                          Commitments ($5K+) &amp; Expressed Interest
+                        </p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleAudienceChange('commitments_only')}
+                        className={cn(
+                          'p-3 rounded-xl border text-left transition-all cursor-pointer',
+                          broadcastAudience === 'commitments_only'
+                            ? 'border-primary bg-primary/10 text-primary font-semibold'
+                            : 'border-border bg-card text-muted-foreground hover:border-primary/50'
+                        )}
+                      >
+                        <p className="font-bold text-foreground">Commitments Only</p>
+                        <p className="text-[10.5px] text-muted-foreground mt-0.5">
+                          Investors with $5,000+ checks
+                        </p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleAudienceChange('interests_only')}
+                        className={cn(
+                          'p-3 rounded-xl border text-left transition-all cursor-pointer',
+                          broadcastAudience === 'interests_only'
+                            ? 'border-primary bg-primary/10 text-primary font-semibold'
+                            : 'border-border bg-card text-muted-foreground hover:border-primary/50'
+                        )}
+                      >
+                        <p className="font-bold text-foreground">Interested Only</p>
+                        <p className="text-[10.5px] text-muted-foreground mt-0.5">
+                          Priority soft intent requests
+                        </p>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Third-Party Platform URL */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-mono flex items-center gap-1.5">
+                        <Link2 className="size-3.5 text-primary" />
+                        2. Third-Party Subscription / Closing Portal URL
+                      </label>
+                      <span className="text-[10.5px] text-muted-foreground">Unique for {broadcastOffering.title}</span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="url"
+                        placeholder="https://app.carta.com/spvs/... or https://docusign.net/..."
+                        value={thirdPartyUrl}
+                        onChange={(e) => setThirdPartyUrl(e.target.value)}
+                        className="w-full rounded-xl border border-border bg-background py-2.5 pl-3 pr-20 text-xs font-mono placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                      {thirdPartyUrl && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(thirdPartyUrl)
+                            setCopiedUrl(true)
+                            setTimeout(() => setCopiedUrl(false), 2000)
+                          }}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] font-mono text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded bg-muted/60"
+                        >
+                          {copiedUrl ? <Check className="size-3 text-emerald-500" /> : <Copy className="size-3" />}
+                          <span>{copiedUrl ? 'Copied' : 'Copy'}</span>
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      This link will be saved securely and embedded into the email CTA button and WhatsApp message.
+                    </p>
+                  </div>
+
+                  {/* Custom Message / Instructions */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-mono">
+                      3. Custom Message from Syndicate Lead (Optional)
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder="e.g. Please sign your subscription documents by Friday, Oct 18th to secure your final allocation."
+                      value={customMessage}
+                      onChange={(e) => setCustomMessage(e.target.value)}
+                      className="w-full rounded-xl border border-border bg-background p-3 text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary leading-relaxed"
+                    />
+                  </div>
+
+                  {/* Channel Delivery Toggles */}
+                  <div className="rounded-xl border border-border bg-muted/30 p-3.5 space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-mono">
+                      4. Delivery Channels
+                    </p>
+                    <div className="flex flex-wrap items-center gap-5 text-xs">
+                      <label className="inline-flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={sendEmail}
+                          onChange={(e) => setSendEmail(e.target.checked)}
+                          className="size-4 rounded border-border text-primary focus:ring-primary"
+                        />
+                        <span className="flex items-center gap-1.5 font-medium">
+                          <Mail className="size-3.5 text-blue-500" />
+                          Send Official Email Notification
+                        </span>
+                      </label>
+
+                      <label className="inline-flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={sendWhatsApp}
+                          onChange={(e) => setSendWhatsApp(e.target.checked)}
+                          className="size-4 rounded border-border text-primary focus:ring-primary"
+                        />
+                        <span className="flex items-center gap-1.5 font-medium">
+                          <MessageSquare className="size-3.5 text-emerald-500" />
+                          Prepare WhatsApp Dispatch &amp; Links
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Verified Recipient Live Preview */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs font-mono">
+                      <span className="font-bold uppercase tracking-wider text-muted-foreground">
+                        Qualified Verified Recipients ({previewRecipients.length})
+                      </span>
+                      {isPreviewLoading && <Loader2 className="size-3.5 animate-spin text-primary" />}
+                    </div>
+
+                    {isPreviewLoading ? (
+                      <div className="flex items-center justify-center p-6 text-xs text-muted-foreground border border-border rounded-xl">
+                        <Loader2 className="size-4 animate-spin mr-2" />
+                        Scanning database for verified participants...
+                      </div>
+                    ) : previewRecipients.length === 0 ? (
+                      <div className="p-4 rounded-xl border border-border bg-muted/20 text-center text-xs text-muted-foreground">
+                        No verified investors currently found for this audience filter.
+                      </div>
+                    ) : (
+                      <div className="max-h-40 overflow-y-auto divide-y divide-border rounded-xl border border-border bg-background">
+                        {previewRecipients.map((r) => (
+                          <div key={r.userId} className="flex items-center justify-between p-2.5 text-xs">
+                            <div className="min-w-0 pr-3">
+                              <p className="font-medium text-foreground truncate">{r.userName}</p>
+                              <p className="text-[11px] text-muted-foreground font-mono">{r.userEmail}</p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span
+                                className={cn(
+                                  'inline-block px-2 py-0.5 rounded text-[10px] font-semibold font-mono',
+                                  r.type === 'commitment'
+                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                    : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                                )}
+                              >
+                                {r.type === 'commitment' && r.amount
+                                  ? `$${r.amount.toLocaleString()} Check`
+                                  : 'Interested'}
+                              </span>
+                              {r.userPhone && (
+                                <p className="text-[10px] text-muted-foreground font-mono mt-0.5 flex items-center gap-1 justify-end">
+                                  <Phone className="size-2.5" />
+                                  {r.userPhone}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsBroadcastModalOpen(false)}
+                      className="rounded-xl text-xs"
+                      disabled={isSendingBroadcast}
+                    >
+                      Cancel
+                    </Button>
+
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleSendBroadcast}
+                      disabled={
+                        isSendingBroadcast ||
+                        previewRecipients.length === 0 ||
+                        !thirdPartyUrl.trim()
+                      }
+                      className="rounded-xl text-xs font-semibold gap-1.5 px-5 shadow-xs"
+                    >
+                      {isSendingBroadcast ? (
+                        <>
+                          <Loader2 className="size-3.5 animate-spin" />
+                          <span>Dispatching Broadcast...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="size-3.5" />
+                          <span>Send Broadcast ({previewRecipients.length})</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </main>

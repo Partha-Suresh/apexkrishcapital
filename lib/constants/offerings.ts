@@ -21,7 +21,7 @@ export const OFFERINGS_CATALOG: OfferingConfig[] = [
     description: "AI-powered developer vetting platform & pre-IPO talent infrastructure engine.",
     targetAllocation: 125000,
     minCheckSize: 5000,
-    valuation: "$500M",
+    valuation: "$3.7B",
     status: "active",
     category: "AI Infrastructure",
     closingDate: "2026-10-15",
@@ -35,9 +35,8 @@ export const OFFERINGS_CATALOG: OfferingConfig[] = [
     targetAllocation: 250000,
     minCheckSize: 10000,
     valuation: "$14.0B",
-    status: "active",
+    status: "funded",
     category: "AI Infrastructure",
-    closingDate: "2026-11-01",
   },
   {
     id: "xai",
@@ -48,9 +47,8 @@ export const OFFERINGS_CATALOG: OfferingConfig[] = [
     targetAllocation: 500000,
     minCheckSize: 25000,
     valuation: "$24.0B",
-    status: "active",
+    status: "funded",
     category: "Frontier Tech",
-    closingDate: "2026-11-30",
   },
   {
     id: "neuralink",
@@ -69,4 +67,3 @@ export const OFFERINGS_CATALOG: OfferingConfig[] = [
 export function getOfferingById(id: string): OfferingConfig | undefined {
   return OFFERINGS_CATALOG.find((o) => o.id === id);
 }
-

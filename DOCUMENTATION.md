@@ -317,6 +317,44 @@ Multi-deal portfolio command center built for syndicate managers and SPV adminis
 
 ---
 
+### 7.6 `/api/admin/offerings/[offeringId]/link`
+
+- **Methods**: `GET`, `PUT`
+- **Authentication**: Required (`role === 'admin'`)
+- **GET Response**: Stored third-party portal URL and instructions for the specific offering.
+- **PUT Request Body**:
+  ```json
+  {
+    "thirdPartyUrl": "https://app.carta.com/spvs/micro1-series",
+    "instructions": "Please sign before Friday closing."
+  }
+  ```
+
+---
+
+### 7.7 `/api/admin/broadcast`
+
+- **Methods**: `GET`, `POST`
+- **Authentication**: Required (`role === 'admin'`)
+- **GET Parameters**: `?offeringId=...&audience=all_verified|commitments_only|interests_only`
+- **GET Response**: Live preview of qualified verified investors, email addresses, and formatted phone numbers.
+- **POST Request Body**:
+  ```json
+  {
+    "offeringId": "micro1-inc",
+    "offeringTitle": "Micro1 Inc.",
+    "targetAudience": "all_verified",
+    "thirdPartyUrl": "https://app.carta.com/spvs/micro1-series",
+    "subject": "Priority Access: Micro1 Inc. SPV Subscription & Closing Portal",
+    "customMessage": "Please review and complete your subscription packet.",
+    "sendEmail": true,
+    "sendWhatsApp": true
+  }
+  ```
+- **POST Response**: Transmission results summary with sent email count, WhatsApp processed count, and generated Click-to-Chat `wa.me` links.
+
+---
+
 ## 8. Security, Rate Limiting & Anti-Spam Protections
 
 To protect system services, avoid SMTP quota exhaustion, and mitigate automated bot abuse, `/api/user/profile` enforces a **three-tier rolling rate limiter**:
