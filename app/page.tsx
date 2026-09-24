@@ -192,12 +192,12 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <Phone className="size-4 text-muted-foreground" />
             <a href="tel:+17208456839" className="text-foreground hover:underline">
-              +1 (720) 845-6839
+              +1 (303) 945-6062
             </a>
           </div>
           <div className="flex items-center gap-2">
             <MapPin className="size-4 text-muted-foreground" />
-            <span className="text-foreground">New York, NY 10001</span>
+            <span className="text-foreground">10846 Glengate Cir, Littleton CO 80130 USA</span>
           </div>
         </section>
       </main>
