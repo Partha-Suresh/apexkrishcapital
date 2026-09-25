@@ -39,12 +39,12 @@ export default function Navbar() {
                 <Image
                   src="/apexkrishnalogo.png"
                   alt="Apex Krish Capital"
-                  width={28}
-                  height={28}
+                  width={50}
+                  height={50}
                   className="rounded-md object-contain"
                   priority
                 />
-                <span className="text-[14px] font-semibold tracking-tight text-foreground">
+                <span className="text-[18px] font-bold tracking-tight text-foreground">
                   Apex Krish
                 </span>
               </Link>
