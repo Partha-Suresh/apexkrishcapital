@@ -93,14 +93,17 @@ export default function HeroSection() {
         {/* High-Intent CTAs */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
           <Button
-            asChild
             size="lg"
+            onClick={() => {
+              const el = document.getElementById("offerings");
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+            }}
             className="h-12 px-7 rounded-full font-bold text-sm tracking-wide bg-foreground text-background hover:bg-foreground/90 transition-all cursor-pointer group shadow-xs"
           >
-            <a href="#offerings" className="flex items-center justify-center gap-2">
+            <span className="flex items-center justify-center gap-2">
               Explore Active Allocations
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-            </a>
+            </span>
           </Button>
 
           {isSignedIn && (

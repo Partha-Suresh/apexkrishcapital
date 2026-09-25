@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import OfferingsSection from "@/components/OfferingsSection";
 import HeroSection from "@/components/HeroSection";
+import BusinessApplicationSection from "@/components/BusinessApplicationSection";
 
 export default function Home() {
   return (
@@ -25,6 +26,9 @@ export default function Home() {
 
         {/* OFFERINGS SECTION (CURRENT: Micro1 Inc. & PAST OFFERINGS) */}
         <OfferingsSection />
+
+        {/* FOR FOUNDERS & COMPANIES - EXPANDABLE SCREEN PORTAL */}
+        <BusinessApplicationSection />
 
         {/* CORE INVESTMENT THESIS & SECTOR INDEX */}
         <section id="focus" className="space-y-8 pt-4">
@@ -188,11 +192,31 @@ export default function Home() {
       </main>
 
       {/* FOOTER */}
-      <footer className="mt-auto border-t border-border bg-background py-10 px-4 text-center text-sm text-muted-foreground space-y-3 font-normal">
-        <p className="font-semibold text-foreground">© {new Date().getFullYear()} Apex Krish Capital. All Rights Reserved.</p>
-        <p className="text-xs max-w-xl mx-auto leading-relaxed text-muted-foreground">
-          Apex Krish Capital provides private market investment opportunities exclusively to accredited investors under SEC Rule 506(c). Past performance is not indicative of future results. Private market securities involve substantial risk of loss.
-        </p>
+      <footer className="mt-auto border-t border-border bg-background py-12 px-4 sm:px-6 text-center text-sm text-muted-foreground space-y-5 font-normal">
+        <div className="flex flex-wrap items-center justify-center gap-6 text-sm font-medium">
+          <Link href="/aboutus" className="text-foreground hover:underline transition-colors">
+            About Us
+          </Link>
+          <span className="text-border">·</span>
+          <a href="#offerings" className="text-muted-foreground hover:text-foreground transition-colors">
+            Active SPV Offerings
+          </a>
+          <span className="text-border">·</span>
+          <a href="#focus" className="text-muted-foreground hover:text-foreground transition-colors">
+            Investment Thesis
+          </a>
+          <span className="text-border">·</span>
+          <a href="#raise-capital" className="text-muted-foreground hover:text-foreground transition-colors">
+            For Founders
+          </a>
+        </div>
+
+        <div className="space-y-2">
+          <p className="font-semibold text-foreground">© {new Date().getFullYear()} Apex Krish Capital. All Rights Reserved.</p>
+          <p className="text-xs max-w-xl mx-auto leading-relaxed text-muted-foreground">
+            Apex Krish Capital provides private market investment opportunities exclusively to accredited investors under SEC Rule 506(c). Past performance is not indicative of future results. Private market securities involve substantial risk of loss.
+          </p>
+        </div>
       </footer>
     </div>
   );

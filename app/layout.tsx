@@ -20,6 +20,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+import ScrollRestorationManager from "@/components/ScrollRestorationManager";
+
 export const metadata: Metadata = {
   title: "Apex Krish Capital | Frontier Technology & Private Equity Investments",
   description:
@@ -45,6 +47,7 @@ export default function RootLayout({
       )}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
+        <ScrollRestorationManager />
         <ThemeProvider>
           <ClerkProvider
             appearance={{
