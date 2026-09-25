@@ -32,6 +32,9 @@ import {
   X,
   Radio,
   Archive,
+  FileText,
+  Eye,
+  Globe,
 } from 'lucide-react'
 import {
   Select,
@@ -69,6 +72,24 @@ type AdminCommitment = {
   amount: number | null
   status: 'active' | 'wire_received' | 'allocated' | 'cancelled' | string
   notes?: string
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+type AdminFounderApplication = {
+  id: string
+  companyName: string
+  founderName: string
+  workEmail: string
+  phoneNumber: string | null
+  websiteUrl: string | null
+  pitchDeckUrl: string | null
+  stage: string
+  targetRaiseAmount: string
+  currentArr: string | null
+  sector: string
+  summary: string
+  status: 'pending_review' | 'reviewed' | 'approved' | 'archived' | string
   createdAt: string | null
   updatedAt: string | null
 }
@@ -169,8 +190,36 @@ function getCommitmentStatusBadgeClass(status?: string) {
   }
 }
 
+function getApplicationStatusBadgeClass(status?: string) {
+  switch (status) {
+    case 'approved':
+      return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+    case 'reviewed':
+      return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30'
+    case 'archived':
+      return 'bg-muted text-muted-foreground border-border'
+    case 'pending_review':
+    default:
+      return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
+  }
+}
+
+function formatApplicationStatus(status?: string) {
+  switch (status) {
+    case 'approved':
+      return 'Approved / In Diligence'
+    case 'reviewed':
+      return 'Reviewed'
+    case 'archived':
+      return 'Archived / Passed'
+    case 'pending_review':
+    default:
+      return 'Pending Review'
+  }
+}
+
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'commitments' | 'users'>('commitments')
+  const [activeTab, setActiveTab] = useState<'commitments' | 'users' | 'founder_applications'>('commitments')
 
   // Users state
   const [users, setUsers] = useState<AdminUser[]>([])
@@ -193,6 +242,15 @@ export default function AdminPage() {
   const [isLoadingCommitments, setIsLoadingCommitments] = useState(true)
   const [commitmentError, setCommitmentError] = useState<string | null>(null)
   const [updatingCommitmentId, setUpdatingCommitmentId] = useState<string | null>(null)
+
+  // Founder Applications state
+  const [founderApplications, setFounderApplications] = useState<AdminFounderApplication[]>([])
+  const [isLoadingApplications, setIsLoadingApplications] = useState(true)
+  const [applicationError, setApplicationError] = useState<string | null>(null)
+  const [updatingAppId, setUpdatingAppId] = useState<string | null>(null)
+  const [appSearchQuery, setAppSearchQuery] = useState('')
+  const [appStatusFilter, setAppStatusFilter] = useState<string>('all')
+  const [selectedApplication, setSelectedApplication] = useState<AdminFounderApplication | null>(null)
 
   // Deal Cards Filter: All vs Active vs Closed
   const [dealFilter, setDealFilter] = useState<'all' | 'active' | 'closed'>('all')
@@ -265,37 +323,39 @@ export default function AdminPage() {
     return () => { isActive = false }
   }, [])
 
-  // Active vs Closed Counts
-  const activeDealsCount = useMemo(() => {
-    return offerings.filter((d) => d.status === 'active' || d.status === 'closing_soon').length
-  }, [offerings])
-
-  const closedDealsCount = useMemo(() => {
-    return offerings.filter((d) => d.status === 'funded' || d.status === 'archived' || d.status === 'closed').length
-  }, [offerings])
-
-  // Filtered Offerings by active/closed pill
-  const displayedOfferings = useMemo(() => {
-    if (dealFilter === 'active') {
-      return offerings.filter((d) => d.status === 'active' || d.status === 'closing_soon')
+  // Fetch Founder Applications
+  useEffect(() => {
+    let isActive = true
+    async function loadApplications() {
+      try {
+        const response = await fetch('/api/admin/company-applications', { cache: 'no-store' })
+        const data = await response.json()
+        if (!response.ok) throw new Error(data.error || 'Unable to load company applications.')
+        if (isActive) {
+          setFounderApplications(data.applications || [])
+        }
+      } catch (error) {
+        if (isActive) setApplicationError(error instanceof Error ? error.message : 'Unable to load applications.')
+      } finally {
+        if (isActive) setIsLoadingApplications(false)
+      }
     }
-    if (dealFilter === 'closed') {
-      return offerings.filter((d) => d.status === 'funded' || d.status === 'archived' || d.status === 'closed')
-    }
-    return offerings
-  }, [offerings, dealFilter])
+    loadApplications()
+    return () => { isActive = false }
+  }, [])
 
   // Open Broadcast Modal
   async function handleOpenBroadcastModal(offering: OfferingMetric) {
     setBroadcastOffering(offering)
-    setBroadcastResult(null)
-    setIsBroadcastModalOpen(true)
-    setBroadcastSubject(`Priority Access: ${offering.title} SPV Portal`)
+    setBroadcastSubject(`Allocation Available: ${offering.title}`)
     setCustomMessage('')
+    setBroadcastResult(null)
+    setPreviewRecipients([])
+    setIsBroadcastModalOpen(true)
     setIsPreviewLoading(true)
 
     try {
-      const linkRes = await fetch(`/api/admin/offerings/${offering.offeringId}/link`, { cache: 'no-store' })
+      const linkRes = await fetch(`/api/admin/broadcast?offeringId=${offering.offeringId}`, { cache: 'no-store' })
       const linkData = await linkRes.json()
       if (linkRes.ok && linkData.thirdPartyUrl) {
         setThirdPartyUrl(linkData.thirdPartyUrl)
@@ -329,7 +389,6 @@ export default function AdminPage() {
     }
   }
 
-  // Handle Audience Selection Change
   function handleAudienceChange(newAudience: 'all_verified' | 'commitments_only' | 'interests_only') {
     setBroadcastAudience(newAudience)
     if (broadcastOffering) {
@@ -337,7 +396,6 @@ export default function AdminPage() {
     }
   }
 
-  // Send Broadcast
   async function handleSendBroadcast() {
     if (!broadcastOffering) return
     if (!thirdPartyUrl.trim()) {
@@ -372,10 +430,12 @@ export default function AdminPage() {
     }
   }
 
-  // Investor verification change
-  async function handleVerificationChange(userId: string, newStatus: string) {
+  // Verification status change
+  async function handleStatusChange(userId: string, newStatus: string) {
     const previousUsers = [...users]
-    setUsers((current) => current.map((u) => (u.id === userId ? { ...u, verificationStatus: newStatus } : u)))
+    setUsers((current) =>
+      current.map((u) => (u.id === userId ? { ...u, verificationStatus: newStatus } : u))
+    )
     setUpdatingUserId(userId)
 
     try {
@@ -385,7 +445,7 @@ export default function AdminPage() {
         body: JSON.stringify({ userId, verificationStatus: newStatus }),
       })
       const data = await response.json()
-      if (!response.ok) throw new Error(data.error || 'Failed to update verification status.')
+      if (!response.ok) throw new Error(data.error || 'Failed to update status.')
 
       setCommitments((prev) =>
         prev.map((c) => (c.userId === userId ? { ...c, userVerificationStatus: newStatus } : c))
@@ -417,6 +477,30 @@ export default function AdminPage() {
       alert(err instanceof Error ? err.message : 'Failed to update commitment status.')
     } finally {
       setUpdatingCommitmentId(null)
+    }
+  }
+
+  // Application status change
+  async function handleApplicationStatusChange(applicationId: string, newStatus: string) {
+    const previousApps = [...founderApplications]
+    setFounderApplications((current) =>
+      current.map((a) => (a.id === applicationId ? { ...a, status: newStatus } : a))
+    )
+    setUpdatingAppId(applicationId)
+
+    try {
+      const response = await fetch('/api/admin/company-applications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ applicationId, status: newStatus }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to update application status.')
+    } catch (err) {
+      setFounderApplications(previousApps)
+      alert(err instanceof Error ? err.message : 'Failed to update application status.')
+    } finally {
+      setUpdatingAppId(null)
     }
   }
 
@@ -460,6 +544,23 @@ export default function AdminPage() {
     })
   }, [users, userSearchQuery])
 
+  // Filtered Founder Applications
+  const filteredFounderApplications = useMemo(() => {
+    return founderApplications.filter((app) => {
+      if (appStatusFilter !== 'all' && app.status !== appStatusFilter) return false
+      if (appSearchQuery.trim()) {
+        const query = appSearchQuery.trim().toLowerCase()
+        const compMatch = app.companyName.toLowerCase().includes(query)
+        const founderMatch = app.founderName.toLowerCase().includes(query)
+        const emailMatch = app.workEmail.toLowerCase().includes(query)
+        const stageMatch = app.stage.toLowerCase().includes(query)
+        const sectorMatch = app.sector.toLowerCase().includes(query)
+        if (!compMatch && !founderMatch && !emailMatch && !stageMatch && !sectorMatch) return false
+      }
+      return true
+    })
+  }, [founderApplications, appStatusFilter, appSearchQuery])
+
   // Export CSV
   function handleExportCSV() {
     if (filteredCommitments.length === 0) {
@@ -498,31 +599,61 @@ export default function AdminPage() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.setAttribute('href', url)
-    link.setAttribute('download', `syndicate-commitments-${new Date().toISOString().slice(0, 10)}.csv`)
+    link.setAttribute('download', `apex_krish_commitments_${new Date().toISOString().slice(0, 10)}.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
   }
 
+  // Active / Closed Deals Count
+  const activeDealsCount = useMemo(
+    () => offerings.filter((o) => o.status === 'active' || o.status === 'closing_soon').length,
+    [offerings]
+  )
+  const closedDealsCount = useMemo(
+    () => offerings.filter((o) => o.status === 'funded' || o.status === 'archived' || o.status === 'closed').length,
+    [offerings]
+  )
+
+  const displayedOfferings = useMemo(() => {
+    if (dealFilter === 'active') {
+      return offerings.filter((o) => o.status === 'active' || o.status === 'closing_soon')
+    }
+    if (dealFilter === 'closed') {
+      return offerings.filter((o) => o.status === 'funded' || o.status === 'archived' || o.status === 'closed')
+    }
+    return offerings
+  }, [offerings, dealFilter])
+
   return (
-    <main className="min-h-screen bg-background px-4 pb-20 pt-[110px] text-foreground md:px-8 md:pt-[140px] font-sans">
-      <div className="mx-auto max-w-[1360px] space-y-7">
-        {/* CLEAN SIMPLE HEADER */}
-        <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              Deal Management
-            </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-              Manage allocations, investor verification statuses, and portal broadcasts.
+    <main className="min-h-screen bg-background text-foreground selection:bg-foreground selection:text-background pb-16 pt-24 sm:pt-28 font-sans">
+      <div className="mx-auto w-full max-w-[1360px] px-4 sm:px-6 md:px-8 space-y-8">
+        {/* HEADER SECTION (CLEAN & MINIMAL) */}
+        <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Deal Management</h1>
+            <p className="text-sm text-muted-foreground">
+              Monitor active SPVs, wire allocations, investor accreditation, and founder syndicate applications.
             </p>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground shadow-xs">
+              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>{activeDealsCount} Live SPV{activeDealsCount === 1 ? '' : 's'}</span>
+            </div>
+            {founderApplications.length > 0 && (
+              <div className="flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary shadow-xs">
+                <Building2 className="size-3.5" />
+                <span>{founderApplications.length} Co Application{founderApplications.length === 1 ? '' : 's'}</span>
+              </div>
+            )}
           </div>
         </section>
 
-        {/* DEAL CARDS SECTION WITH CLEAN ACTIVE / CLOSED FILTER */}
+        {/* DEAL CARDS SECTION */}
         <section className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-            {/* Filter Toggle: All vs Active vs Closed */}
             <div className="inline-flex rounded-2xl border border-border bg-muted/40 p-1 text-xs">
               <button
                 type="button"
@@ -583,7 +714,6 @@ export default function AdminPage() {
                   )}
                 >
                   <div className="space-y-3">
-                    {/* Top Row: Title + Status Tag */}
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors">
@@ -600,49 +730,58 @@ export default function AdminPage() {
                           Active
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-muted text-muted-foreground shrink-0">
-                          Distributed
+                        <span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-muted text-muted-foreground border border-border shrink-0">
+                          Closed
                         </span>
                       )}
                     </div>
 
-                    {/* Progress Bar & Amount */}
                     <div className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs font-medium">
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">
-                          ${deal.committedCapital.toLocaleString()}
-                        </span>
-                        <span className="text-muted-foreground font-semibold">{deal.percentFilled}% filled</span>
+                      <div className="flex justify-between text-xs font-medium">
+                        <span className="text-muted-foreground">Committed: ${deal.committedCapital.toLocaleString()}</span>
+                        <span className="text-foreground font-bold">{deal.percentFilled}%</span>
                       </div>
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                      <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                         <div
-                          className={cn(
-                            'h-full rounded-full transition-all',
-                            isActive ? 'bg-primary' : 'bg-muted-foreground/50'
-                          )}
-                          style={{ width: `${Math.min(100, deal.percentFilled)}%` }}
+                          className="h-full rounded-full bg-foreground transition-all duration-500"
+                          style={{ width: `${Math.min(deal.percentFilled, 100)}%` }}
                         />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs border-t border-border/60 pt-2.5">
+                      <div>
+                        <span className="text-muted-foreground block text-[11px]">Wires In</span>
+                        <strong className="text-foreground font-semibold">
+                          ${deal.wiresReceivedCapital.toLocaleString()}
+                        </strong>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-muted-foreground block text-[11px]">Allocated</span>
+                        <strong className="text-foreground font-semibold">
+                          ${deal.allocatedCapital.toLocaleString()}
+                        </strong>
                       </div>
                     </div>
                   </div>
 
-                  {/* Single Action Button (Disabled for closed deals) */}
-                  <div className="pt-1">
+                  <div className="pt-2 border-t border-border/60 flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground font-medium">
+                      {deal.commitmentsCount} LPs ({deal.interestsCount} Int.)
+                    </span>
+
                     <Button
+                      type="button"
+                      size="sm"
+                      variant={isActive ? 'default' : 'outline'}
+                      disabled={!isActive}
                       onClick={(e) => {
                         e.stopPropagation()
-                        if (isActive) {
-                          handleOpenBroadcastModal(deal)
-                        }
+                        if (isActive) handleOpenBroadcastModal(deal)
                       }}
-                      size="sm"
-                      disabled={!isActive}
-                      variant={isActive ? 'default' : 'outline'}
                       className={cn(
-                        'w-full h-9 rounded-xl text-xs font-semibold gap-2',
-                        isActive
-                          ? 'bg-foreground text-background hover:bg-foreground/90 cursor-pointer'
-                          : 'opacity-50 cursor-not-allowed bg-muted text-muted-foreground border-transparent shadow-none'
+                        'h-8 text-xs font-semibold rounded-xl gap-1.5 px-3',
+                        !isActive && 'opacity-60 cursor-not-allowed pointer-events-none'
                       )}
                     >
                       {isActive ? (
@@ -661,9 +800,9 @@ export default function AdminPage() {
           </div>
         </section>
 
-        {/* PRIMARY TABS: COMMITMENTS VS INVESTORS */}
+        {/* PRIMARY TABS: COMMITMENTS VS INVESTORS VS FOUNDER APPLICATIONS */}
         <div className="flex items-center justify-between border-b border-border pb-3">
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             <button
               onClick={() => setActiveTab('commitments')}
               className={cn(
@@ -686,6 +825,18 @@ export default function AdminPage() {
             >
               Investors ({users.length})
             </button>
+            <button
+              onClick={() => setActiveTab('founder_applications')}
+              className={cn(
+                'rounded-full px-4.5 py-2 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5',
+                activeTab === 'founder_applications'
+                  ? 'bg-foreground text-background shadow-xs'
+                  : 'bg-muted/50 text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Building2 className="size-3.5 text-primary" />
+              <span>Founder Applications ({founderApplications.length})</span>
+            </button>
           </div>
 
           {activeTab === 'commitments' && (
@@ -704,7 +855,6 @@ export default function AdminPage() {
         {/* TAB 1: COMMITMENTS & ALLOCATIONS */}
         {activeTab === 'commitments' && (
           <section className="space-y-4">
-            {/* Unified Search & Filter Bar */}
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative flex-1 min-w-[220px]">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -755,10 +905,10 @@ export default function AdminPage() {
               <div className="w-[150px]">
                 <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                   <SelectTrigger className="h-9.5 rounded-xl text-xs font-medium">
-                    <SelectValue placeholder="All Status" />
+                    <SelectValue placeholder="All Statuses" />
                   </SelectTrigger>
                   <SelectContent className="text-xs">
-                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="wire_received">Wire Received</SelectItem>
                     <SelectItem value="allocated">Allocated</SelectItem>
@@ -766,113 +916,70 @@ export default function AdminPage() {
                   </SelectContent>
                 </Select>
               </div>
-
-              {(selectedOfferingId !== 'all' || selectedType !== 'all' || selectedStatus !== 'all' || searchQuery) && (
-                <button
-                  onClick={() => {
-                    setSelectedOfferingId('all')
-                    setSelectedType('all')
-                    setSelectedStatus('all')
-                    setSearchQuery('')
-                  }}
-                  className="text-xs text-primary hover:underline font-semibold cursor-pointer"
-                >
-                  Reset
-                </button>
-              )}
             </div>
 
-            {/* Commitments Table */}
-            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
+            <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
               {isLoadingCommitments ? (
-                <div className="p-12 text-center text-sm text-muted-foreground flex items-center justify-center gap-2.5">
-                  <Loader2 className="size-4 animate-spin" /> Loading records...
+                <div className="flex h-64 items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="size-5 animate-spin text-foreground" />
+                  <span>Loading commitments...</span>
                 </div>
+              ) : commitmentError ? (
+                <div className="p-8 text-center text-sm text-destructive">{commitmentError}</div>
               ) : filteredCommitments.length === 0 ? (
                 <div className="p-12 text-center text-sm text-muted-foreground">
-                  No commitment records found matching your filters.
+                  No commitments match the selected filter.
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
-                    <thead className="bg-muted/50 text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border">
+                    <thead className="border-b border-border bg-muted/40 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       <tr>
                         <th className="px-5 py-3.5">Investor</th>
                         <th className="px-5 py-3.5">Offering</th>
-                        <th className="px-5 py-3.5">Type</th>
-                        <th className="px-5 py-3.5">Amount</th>
-                        <th className="px-5 py-3.5">Verification</th>
+                        <th className="px-5 py-3.5">Type &amp; Amount</th>
                         <th className="px-5 py-3.5">Status</th>
+                        <th className="px-5 py-3.5">Verification</th>
                         <th className="px-5 py-3.5">Date</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-border">
+                    <tbody className="divide-y divide-border/60">
                       {filteredCommitments.map((item) => (
                         <tr key={item.id} className="hover:bg-muted/20 transition-colors">
                           <td className="px-5 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="flex size-8 items-center justify-center rounded-full bg-muted font-bold text-xs text-foreground shrink-0 border border-border/50">
-                                {getInitials(item.userName)}
+                            <div className="font-semibold text-foreground">{item.userName}</div>
+                            <div className="text-xs text-muted-foreground">{item.userEmail}</div>
+                            {item.userPhone && (
+                              <div className="text-[11px] text-muted-foreground/80 flex items-center gap-1 mt-0.5">
+                                <Phone className="size-2.5" />
+                                <span>{item.userPhone}</span>
                               </div>
-                              <div className="min-w-0">
-                                <p className="font-semibold text-foreground truncate text-sm">{item.userName}</p>
-                                <p className="text-xs text-muted-foreground truncate">{item.userEmail}</p>
-                                {item.userPhone && (
-                                  <p className="text-xs text-muted-foreground/90 flex items-center gap-1 mt-0.5">
-                                    <Phone className="size-3 text-muted-foreground" /> {item.userPhone}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-
-                          <td className="px-5 py-4 font-semibold text-foreground text-sm">{item.offeringTitle}</td>
-
-                          <td className="px-5 py-4">
-                            {item.type === 'commitment' ? (
-                              <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold text-xs border border-emerald-500/20">
-                                Commitment
-                              </span>
-                            ) : (
-                              <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold text-xs border border-blue-500/20">
-                                Interested
-                              </span>
                             )}
                           </td>
-
-                          <td className="px-5 py-4 font-bold text-foreground tabular-nums text-sm">
-                            {item.amount ? `$${item.amount.toLocaleString()}` : '—'}
-                          </td>
-
                           <td className="px-5 py-4">
-                            <span
-                              className={cn(
-                                'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border whitespace-nowrap',
-                                getVerificationBadgeClass(item.userVerificationStatus)
-                              )}
-                            >
-                              <span
-                                className={cn(
-                                  'size-1.5 rounded-full',
-                                  item.userVerificationStatus === 'verified'
-                                    ? 'bg-emerald-500'
-                                    : item.userVerificationStatus === 'not verified'
-                                    ? 'bg-destructive'
-                                    : 'bg-amber-500'
-                                )}
-                              />
-                              {formatVerificationStatus(item.userVerificationStatus)}
+                            <span className="font-medium text-foreground">{item.offeringTitle}</span>
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="font-bold text-foreground">
+                              {item.amount ? `$${item.amount.toLocaleString()}` : '—'}
+                            </div>
+                            <span className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">
+                              {item.type}
                             </span>
                           </td>
-
                           <td className="px-5 py-4">
-                            <div className="w-[155px]">
+                            <div className="w-[145px]">
                               <Select
                                 value={item.status || 'active'}
                                 onValueChange={(val) => handleCommitmentStatusChange(item.id, val)}
                                 disabled={updatingCommitmentId === item.id}
                               >
-                                <SelectTrigger className={cn('h-8.5 rounded-xl border px-3 text-xs font-semibold shadow-none', getCommitmentStatusBadgeClass(item.status))}>
+                                <SelectTrigger
+                                  className={cn(
+                                    'h-8 text-xs font-semibold rounded-full border',
+                                    getCommitmentStatusBadgeClass(item.status)
+                                  )}
+                                >
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="text-xs">
@@ -884,7 +991,17 @@ export default function AdminPage() {
                               </Select>
                             </div>
                           </td>
-
+                          <td className="px-5 py-4">
+                            <span
+                              className={cn(
+                                'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border',
+                                getVerificationBadgeClass(item.userVerificationStatus)
+                              )}
+                            >
+                              <span className="size-1.5 rounded-full bg-current" />
+                              {formatVerificationStatus(item.userVerificationStatus)}
+                            </span>
+                          </td>
                           <td className="px-5 py-4 text-muted-foreground text-xs font-medium">
                             {formatDate(item.createdAt)}
                           </td>
@@ -898,71 +1015,67 @@ export default function AdminPage() {
           </section>
         )}
 
-        {/* TAB 2: INVESTORS DIRECTORY */}
+        {/* TAB 2: INVESTORS ROSTER */}
         {activeTab === 'users' && (
           <section className="space-y-4">
             <div className="relative max-w-md">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search by name, email, phone..."
+                placeholder="Search investor by name, email, phone..."
                 value={userSearchQuery}
                 onChange={(e) => setUserSearchQuery(e.target.value)}
                 className="w-full rounded-xl border border-border bg-background py-2 pl-9.5 pr-3 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none"
               />
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
+            <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
               {isLoadingUsers ? (
-                <div className="p-12 text-center text-sm text-muted-foreground flex items-center justify-center gap-2.5">
-                  <Loader2 className="size-4 animate-spin" /> Loading investors...
+                <div className="flex h-64 items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="size-5 animate-spin text-foreground" />
+                  <span>Loading investors...</span>
                 </div>
+              ) : userError ? (
+                <div className="p-8 text-center text-sm text-destructive">{userError}</div>
               ) : filteredUsers.length === 0 ? (
-                <div className="p-12 text-center text-sm text-muted-foreground">
-                  No investors found.
-                </div>
+                <div className="p-12 text-center text-sm text-muted-foreground">No investors found.</div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
-                    <thead className="bg-muted/50 text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border">
+                    <thead className="border-b border-border bg-muted/40 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       <tr>
-                        <th className="px-5 py-3.5">Investor</th>
+                        <th className="px-5 py-3.5">Investor Name</th>
+                        <th className="px-5 py-3.5">Email</th>
                         <th className="px-5 py-3.5">Phone</th>
                         <th className="px-5 py-3.5">Accreditation</th>
-                        <th className="px-5 py-3.5">Verification Status</th>
-                        <th className="px-5 py-3.5">Joined</th>
+                        <th className="px-5 py-3.5">Verification Action</th>
+                        <th className="px-5 py-3.5">Created</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-border">
+                    <tbody className="divide-y divide-border/60">
                       {filteredUsers.map((user) => (
                         <tr key={user.id} className="hover:bg-muted/20 transition-colors">
+                          <td className="px-5 py-4 font-semibold text-foreground">{user.name}</td>
+                          <td className="px-5 py-4 text-muted-foreground">{user.email}</td>
+                          <td className="px-5 py-4 text-muted-foreground">{user.phoneNumber || '—'}</td>
                           <td className="px-5 py-4">
-                            <p className="font-semibold text-foreground text-sm">{user.name}</p>
-                            <p className="text-xs text-muted-foreground">{user.email}</p>
-                          </td>
-
-                          <td className="px-5 py-4 text-muted-foreground text-xs font-medium">
-                            {user.phoneNumber || '—'}
-                          </td>
-
-                          <td className="px-5 py-4">
-                            <span className="px-3 py-1 rounded-lg bg-muted text-foreground text-xs font-medium">
+                            <span className="inline-block px-2.5 py-0.5 rounded-lg bg-muted text-xs font-semibold text-foreground border border-border/80">
                               {user.investorStatus}
                             </span>
                           </td>
-
                           <td className="px-5 py-4">
-                            <div className="w-[195px]">
+                            <div className="w-[170px]">
                               <Select
-                                value={
-                                  !user.verificationStatus || user.verificationStatus === 'yet to be verified'
-                                    ? 'pending verification'
-                                    : user.verificationStatus
-                                }
-                                onValueChange={(val) => handleVerificationChange(user.id, val)}
+                                value={user.verificationStatus}
+                                onValueChange={(val) => handleStatusChange(user.id, val)}
                                 disabled={updatingUserId === user.id}
                               >
-                                <SelectTrigger className={cn('h-8.5 rounded-xl border px-3 text-xs font-semibold', getVerificationBadgeClass(user.verificationStatus))}>
+                                <SelectTrigger
+                                  className={cn(
+                                    'h-8 text-xs font-semibold rounded-full border',
+                                    getVerificationBadgeClass(user.verificationStatus)
+                                  )}
+                                >
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="text-xs">
@@ -988,7 +1101,6 @@ export default function AdminPage() {
                               </Select>
                             </div>
                           </td>
-
                           <td className="px-5 py-4 text-muted-foreground text-xs font-medium">
                             {formatDate(user.createdAt)}
                           </td>
@@ -1002,7 +1114,336 @@ export default function AdminPage() {
           </section>
         )}
 
-        {/* BROADCAST DEAL LINK MODAL (SIMPLE & EFFICIENT) */}
+        {/* TAB 3: FOUNDER & COMPANY APPLICATIONS */}
+        {activeTab === 'founder_applications' && (
+          <section className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[240px]">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search company, founder, work email, stage, sector..."
+                  value={appSearchQuery}
+                  onChange={(e) => setAppSearchQuery(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-background py-2 pl-9.5 pr-3 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+
+              <div className="w-[180px]">
+                <Select value={appStatusFilter} onValueChange={setAppStatusFilter}>
+                  <SelectTrigger className="h-9.5 rounded-xl text-xs font-medium">
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent className="text-xs">
+                    <SelectItem value="all">All Statuses ({founderApplications.length})</SelectItem>
+                    <SelectItem value="pending_review">Pending Review</SelectItem>
+                    <SelectItem value="reviewed">Reviewed</SelectItem>
+                    <SelectItem value="approved">Approved / In Diligence</SelectItem>
+                    <SelectItem value="archived">Archived / Passed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
+              {isLoadingApplications ? (
+                <div className="flex h-64 items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="size-5 animate-spin text-foreground" />
+                  <span>Loading company applications...</span>
+                </div>
+              ) : applicationError ? (
+                <div className="p-8 text-center text-sm text-destructive">{applicationError}</div>
+              ) : filteredFounderApplications.length === 0 ? (
+                <div className="p-12 text-center text-sm text-muted-foreground">
+                  No company applications found matching the selected filter.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead className="border-b border-border bg-muted/40 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <tr>
+                        <th className="px-5 py-3.5">Company &amp; Founder</th>
+                        <th className="px-5 py-3.5">Stage &amp; Sector</th>
+                        <th className="px-5 py-3.5">Target Raise &amp; ARR</th>
+                        <th className="px-5 py-3.5">Pitch Deck / Links</th>
+                        <th className="px-5 py-3.5">Review Status</th>
+                        <th className="px-5 py-3.5">Actions</th>
+                        <th className="px-5 py-3.5">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {filteredFounderApplications.map((app) => (
+                        <tr key={app.id} className="hover:bg-muted/20 transition-colors">
+                          <td className="px-5 py-4">
+                            <div className="font-bold text-foreground text-base flex items-center gap-1.5">
+                              <span>{app.companyName}</span>
+                              {app.websiteUrl && (
+                                <a
+                                  href={app.websiteUrl.startsWith('http') ? app.websiteUrl : `https://${app.websiteUrl}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-muted-foreground hover:text-primary transition-colors"
+                                  title="Visit Website"
+                                >
+                                  <Globe className="size-3.5" />
+                                </a>
+                              )}
+                            </div>
+                            <div className="text-xs font-medium text-foreground/90 mt-0.5">
+                              {app.founderName} • <span className="text-muted-foreground">{app.workEmail}</span>
+                            </div>
+                            {app.phoneNumber && (
+                              <div className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                                <Phone className="size-2.5" />
+                                <span>{app.phoneNumber}</span>
+                              </div>
+                            )}
+                          </td>
+
+                          <td className="px-5 py-4">
+                            <div className="inline-block px-2.5 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20 text-xs font-semibold">
+                              {app.stage}
+                            </div>
+                            <div className="text-xs text-muted-foreground font-medium mt-1">
+                              {app.sector}
+                            </div>
+                          </td>
+
+                          <td className="px-5 py-4">
+                            <div className="font-bold text-foreground text-sm">
+                              {app.targetRaiseAmount}
+                            </div>
+                            <span className="text-[11px] text-muted-foreground block font-medium">
+                              ARR: {app.currentArr || 'Not specified'}
+                            </span>
+                          </td>
+
+                          <td className="px-5 py-4">
+                            {app.pitchDeckUrl ? (
+                              <a
+                                href={app.pitchDeckUrl.startsWith('http') ? app.pitchDeckUrl : `https://${app.pitchDeckUrl}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-primary/30 bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors"
+                              >
+                                <FileText className="size-3.5" />
+                                <span>Open Pitch Deck</span>
+                                <ExternalLink className="size-3" />
+                              </a>
+                            ) : (
+                              <span className="text-xs text-muted-foreground font-medium italic">No link provided</span>
+                            )}
+                          </td>
+
+                          <td className="px-5 py-4">
+                            <div className="w-[175px]">
+                              <Select
+                                value={app.status || 'pending_review'}
+                                onValueChange={(val) => handleApplicationStatusChange(app.id, val)}
+                                disabled={updatingAppId === app.id}
+                              >
+                                <SelectTrigger
+                                  className={cn(
+                                    'h-8 text-xs font-semibold rounded-full border',
+                                    getApplicationStatusBadgeClass(app.status)
+                                  )}
+                                >
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="text-xs">
+                                  <SelectItem value="pending_review">
+                                    <span className="flex items-center gap-1.5">
+                                      <span className="size-1.5 rounded-full bg-amber-500" />
+                                      Pending Review
+                                    </span>
+                                  </SelectItem>
+                                  <SelectItem value="reviewed">
+                                    <span className="flex items-center gap-1.5">
+                                      <span className="size-1.5 rounded-full bg-blue-500" />
+                                      Reviewed
+                                    </span>
+                                  </SelectItem>
+                                  <SelectItem value="approved">
+                                    <span className="flex items-center gap-1.5">
+                                      <span className="size-1.5 rounded-full bg-emerald-500" />
+                                      Approved / In Diligence
+                                    </span>
+                                  </SelectItem>
+                                  <SelectItem value="archived">
+                                    <span className="flex items-center gap-1.5">
+                                      <span className="size-1.5 rounded-full bg-muted-foreground" />
+                                      Archived / Passed
+                                    </span>
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </td>
+
+                          <td className="px-5 py-4">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSelectedApplication(app)}
+                              className="h-8 rounded-xl text-xs font-semibold gap-1.5 px-3"
+                            >
+                              <Eye className="size-3.5" />
+                              <span>View Thesis</span>
+                            </Button>
+                          </td>
+
+                          <td className="px-5 py-4 text-muted-foreground text-xs font-medium">
+                            {formatDate(app.createdAt)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* APPLICATION DETAILS MODAL */}
+        {selectedApplication && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="w-full max-w-2xl rounded-3xl border border-border bg-card text-card-foreground p-6 sm:p-8 shadow-2xl space-y-6 font-sans max-h-[90vh] overflow-y-auto">
+              <div className="flex items-start justify-between gap-4 pb-4 border-b border-border">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-2">
+                    <Building2 className="size-3.5" />
+                    <span>Founder Application Details</span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-foreground">
+                    {selectedApplication.companyName}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Founded by {selectedApplication.founderName} • {selectedApplication.workEmail}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedApplication(null)}
+                  className="rounded-full p-2 text-muted-foreground hover:bg-muted cursor-pointer transition"
+                >
+                  <X className="size-5" />
+                </button>
+              </div>
+
+              {/* Overview Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div className="rounded-xl border border-border bg-muted/30 p-3">
+                  <span className="text-muted-foreground font-medium block">Stage</span>
+                  <strong className="text-foreground font-semibold text-sm">{selectedApplication.stage}</strong>
+                </div>
+                <div className="rounded-xl border border-border bg-muted/30 p-3">
+                  <span className="text-muted-foreground font-medium block">Target Raise</span>
+                  <strong className="text-foreground font-semibold text-sm">{selectedApplication.targetRaiseAmount}</strong>
+                </div>
+                <div className="rounded-xl border border-border bg-muted/30 p-3">
+                  <span className="text-muted-foreground font-medium block">Current ARR</span>
+                  <strong className="text-foreground font-semibold text-sm">{selectedApplication.currentArr || '—'}</strong>
+                </div>
+                <div className="rounded-xl border border-border bg-muted/30 p-3">
+                  <span className="text-muted-foreground font-medium block">Sector</span>
+                  <strong className="text-foreground font-semibold text-sm">{selectedApplication.sector}</strong>
+                </div>
+              </div>
+
+              {/* Pitch Deck / Links */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Materials &amp; Pitch Deck
+                </label>
+                <div className="flex flex-wrap items-center gap-3">
+                  {selectedApplication.pitchDeckUrl ? (
+                    <a
+                      href={selectedApplication.pitchDeckUrl.startsWith('http') ? selectedApplication.pitchDeckUrl : `https://${selectedApplication.pitchDeckUrl}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-xs hover:bg-primary/90 transition-all"
+                    >
+                      <FileText className="size-4" />
+                      <span>Open Pitch Deck / Data Room</span>
+                      <ExternalLink className="size-3.5" />
+                    </a>
+                  ) : (
+                    <span className="text-xs text-muted-foreground italic">No pitch deck URL provided</span>
+                  )}
+
+                  {selectedApplication.websiteUrl && (
+                    <a
+                      href={selectedApplication.websiteUrl.startsWith('http') ? selectedApplication.websiteUrl : `https://${selectedApplication.websiteUrl}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-border text-xs font-semibold text-foreground hover:bg-muted transition-all"
+                    >
+                      <Globe className="size-3.5" />
+                      <span>Company Website</span>
+                      <ExternalLink className="size-3" />
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Executive Summary / Elevator Pitch */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Executive Summary &amp; Growth Thesis
+                </label>
+                <div className="rounded-2xl border border-border bg-muted/20 p-4 text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                  {selectedApplication.summary}
+                </div>
+              </div>
+
+              {/* Review Status Selector & Footer */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-border">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xs font-semibold text-muted-foreground">Current Status:</span>
+                  <div className="w-[180px]">
+                    <Select
+                      value={selectedApplication.status || 'pending_review'}
+                      onValueChange={(val) => {
+                        handleApplicationStatusChange(selectedApplication.id, val)
+                        setSelectedApplication((prev) => (prev ? { ...prev, status: val } : null))
+                      }}
+                    >
+                      <SelectTrigger
+                        className={cn(
+                          'h-8 text-xs font-semibold rounded-full border',
+                          getApplicationStatusBadgeClass(selectedApplication.status)
+                        )}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="text-xs">
+                        <SelectItem value="pending_review">Pending Review</SelectItem>
+                        <SelectItem value="reviewed">Reviewed</SelectItem>
+                        <SelectItem value="approved">Approved / In Diligence</SelectItem>
+                        <SelectItem value="archived">Archived / Passed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedApplication(null)}
+                  className="rounded-xl text-xs h-9 px-5"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* BROADCAST DEAL LINK MODAL */}
         {isBroadcastModalOpen && broadcastOffering && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-200">
             <div className="w-full max-w-lg rounded-3xl border border-border bg-card text-card-foreground p-6 shadow-2xl space-y-5 font-sans">
@@ -1061,7 +1502,6 @@ export default function AdminPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* Audience Toggle */}
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       Target Audience
@@ -1106,7 +1546,6 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  {/* Third Party URL */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       Third-Party Closing / Portal URL
@@ -1120,7 +1559,6 @@ export default function AdminPage() {
                     />
                   </div>
 
-                  {/* Custom Message */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       Note from Admin (Optional)
@@ -1134,7 +1572,6 @@ export default function AdminPage() {
                     />
                   </div>
 
-                  {/* Recipients Preview */}
                   <div className="rounded-xl border border-border bg-muted/20 p-3 text-xs flex items-center justify-between">
                     <span className="text-muted-foreground font-medium">Verified Recipients:</span>
                     <strong className="text-foreground font-semibold">
@@ -1142,7 +1579,6 @@ export default function AdminPage() {
                     </strong>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border">
                     <Button
                       type="button"
