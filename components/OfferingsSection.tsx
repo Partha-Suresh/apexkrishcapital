@@ -16,7 +16,6 @@ import {
   Loader2,
   Sparkles,
   Info,
-  Building2,
   Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -197,7 +196,7 @@ export default function OfferingsSection({
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border pb-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 font-mono text-[10.5px] font-bold uppercase tracking-widest text-muted-foreground">
-            <span>01 / PRIVATE SYNDICATE</span>
+            <span>PRIVATE SYNDICATE</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             Current & Past Offerings
@@ -255,9 +254,6 @@ export default function OfferingsSection({
                   <span className="size-1.5 rounded-full bg-emerald-500" />
                   Active Offering
                 </span>
-                <span className="px-2.5 py-0.5 rounded border border-border bg-muted/30 text-muted-foreground text-[10.5px] uppercase">
-                  Direct SPV Equity
-                </span>
               </div>
 
               <div className="flex items-center gap-2 text-muted-foreground">
@@ -269,11 +265,10 @@ export default function OfferingsSection({
             {/* Main Info */}
             <div className="mt-7 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               <div className="lg:col-span-7 space-y-4">
-                <div className="space-y-1.5">
-                  <div className="inline-flex items-center gap-2 text-xs font-mono text-primary font-bold uppercase tracking-wider">
-                    <Building2 className="size-3.5" />
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-muted-foreground tracking-wide">
                     Equity: Direct shares in Micro1 Inc.
-                  </div>
+                  </p>
                   <h3 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
                     Micro1 Inc.
                   </h3>

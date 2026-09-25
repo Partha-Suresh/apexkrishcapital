@@ -61,19 +61,11 @@ This document provides a comprehensive, element-by-element architectural breakdo
 
 ## 3. System Notice Bar (`app/page.tsx`)
 
-```
-[ ● (Pulsing Emerald) APEX KRISH CAPITAL · PRIVATE MARKET SYNDICATE ]
-```
 
 ### UI Positioning & Structure
 - **Positioning**: Centered directly beneath the top navigation offset (`pt-24 sm:pt-28 pb-2 text-center`).
 - **Styling**: `inline-flex items-center gap-2 rounded border border-border bg-muted/40 px-3 py-1 text-[10.5px] font-mono uppercase tracking-wider`.
 
-### Text Selection & Strategic Rationale
-- **Text**: `APEX KRISH CAPITAL · PRIVATE MARKET SYNDICATE`
-- **Pulsing Emerald Dot**:
-  - **Reasoning**: Instantly communicates a live, operational secondary syndicate desk rather than a static brochure site or passive blog.
-  - **Monospace Tagging**: Sets the tone as a specialized institutional allocation channel.
 
 ---
 
@@ -96,10 +88,10 @@ The Hero Section is architected in two complementary halves:
 
  [ Explore Active Allocations -> ]   [ Complete / Update Investor Profile ]
 
- 01 10% carry (vs 20%+ PE)     02 $5,000 accessible min.     03 Direct Delaware SPVs
+ 10% carry (vs 20%+ PE)
 ===================================================================================================
                                 2. INTERACTIVE SYNDICATE TERMINAL
- [ SYNDICATE TERMINAL · ALLOCATION LEDGER ]   [ Current SPV: Micro1 | Carry Advantage | Legal Arch ]
+ [ Current SPV: Micro1 | Carry Advantage | Legal Arch ]
  -------------------------------------------------------------------------------------------------
   (Tab 1: Micro1 Term Sheet)       (Tab 2: Carry Ledger)         (Tab 3: SPV Mechanics)
    • $3.7B Valuation                • Select Gain: $50k-$500k     • Delaware Series LLC
@@ -354,5 +346,16 @@ The Hero Section is architected in two complementary halves:
 | **Micro1 Deal Room Card** | [`components/OfferingsSection.tsx`](file:///home/parthasuresh/Cient%20work/my-app/components/OfferingsSection.tsx#L250-L442) | 12-col split card | $3.7B Valuation, $125K Cap, $5K Min, Status Panel | Provides immediate terms access and gated commitment actions. |
 | **Past Deals Grid** | [`components/OfferingsSection.tsx`](file:///home/parthasuresh/Cient%20work/my-app/components/OfferingsSection.tsx#L447-L533) | 3-column card deck | Scale AI ($14B), xAI ($24B), Neuralink ($7B) | Builds institutional credibility by showcasing distributed allocations into tier-1 companies. |
 | **Sectors of Conviction** | [`app/page.tsx`](file:///home/parthasuresh/Cient%20work/my-app/app/page.tsx#L35-L123) | 3 stacked rows (`id="focus"`) | AI Agents, Accelerated Computing, Frontier Science | Establishes specialized domain expertise and clear investment thesis. |
-| **Fiduciary Standards** | [`app/page.tsx`](file:///home/parthasuresh/Cient%20work/my-app/app/page.tsx#L126-L182) | 2x2 grid (`03 / STRUCTURAL INTEGRITY`) | Secondary Diligence, Delaware SPVs, 10% Carry, SEC 506(c) | Addresses and eliminates institutional investor risk objections. |
 | **Syndicate Desk Strip** | [`app/page.tsx`](file:///home/parthasuresh/Cient%20work/my-app/app/page.tsx#L185-L202) | Pre-footer box | Email, Phone, NY Office | Real-world physical and direct communication contact points. |
+| **Agentation Toolbar** | [`components/AgentationProvider.tsx`](file:///home/parthasuresh/Cient%20work/my-app/components/AgentationProvider.tsx) | Floating bottom dev overlay | [agentation.com](https://agentation.com) visual inspector | Real-time DOM element feedback and component hierarchy exporter for AI coding agents. |
+
+---
+
+## 10. Developer Tooling: Agentation Integration (`agentation.com`)
+
+To enable seamless visual iteration and precise UI debugging between the developer and AI coding agents:
+- **Component**: [`components/AgentationProvider.tsx`](file:///home/parthasuresh/Cient%20work/my-app/components/AgentationProvider.tsx)
+- **Integration**: Mounted inside the root layout (`app/layout.tsx`) wrapped in a development-only environment check (`process.env.NODE_ENV === "development"`).
+- **Functionality**:
+  - Automatically loads the floating **Agentation** visual inspector toolbar during local development.
+  - Allows clicking and inspecting any DOM element, card, or typography token on the landing page to extract exact CSS selectors, component file paths, and computed styles directly formatted for AI coding assistants.

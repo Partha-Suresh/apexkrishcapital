@@ -70,17 +70,10 @@ export default function HeroSection() {
   return (
     <section className="relative pt-4 sm:pt-8 pb-4 space-y-10">
       {/* EDITORIAL HERO HEADER */}
-      <div className="space-y-6 max-w-3xl">
-        {/* Monospace Metadata Tag */}
-        <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded border border-border bg-muted/60 text-foreground font-semibold">
-            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            DIRECT SPV ALLOCATIONS
-          </span>
-          <span className="text-border">/</span>
-          <span>10% PERFORMANCE CARRY</span>
-          <span className="text-border">/</span>
-          <span>SEC RULE 506(C)</span>
+      <div className="space-y-6 max-w-4xl">
+        {/* Classical Tag */}
+        <div className="text-xs font-semibold tracking-wide text-emerald-600 dark:text-emerald-400 uppercase">
+          10% Performance Carry
         </div>
 
         {/* High-Contrast Conversion Headline */}
@@ -92,7 +85,7 @@ export default function HeroSection() {
         </h1>
 
         {/* Narrative Value Proposition */}
-        <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl font-normal">
+        <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-3xl font-normal">
           While larger players in the private equity market charge fees upwards of 20% of profits, we charge half of that (10% carry). You leave it to us to source, diligience, and structure direct allocations into the right companies.
         </p>
 
@@ -131,22 +124,6 @@ export default function HeroSection() {
               </Link>
             </Button>
           )}
-        </div>
-
-        {/* Editorial Trust Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-border/70 text-xs font-mono text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold">01</span>
-            <span>10% carry (vs 20%+ PE)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold">02</span>
-            <span>$5,000 accessible min.</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold">03</span>
-            <span>Direct Delaware SPVs</span>
-          </div>
         </div>
       </div>
 
@@ -207,12 +184,6 @@ export default function HeroSection() {
           <div className="p-5 sm:p-7 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div className="space-y-1">
-                <div className="flex items-center gap-2 font-mono text-xs">
-                  <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20">
-                    ● ACTIVE SYNDICATION
-                  </span>
-                  <span className="text-muted-foreground">Series Secondary Equity</span>
-                </div>
                 <h3 className="text-2xl font-bold text-foreground">
                   Micro1 Inc.
                 </h3>

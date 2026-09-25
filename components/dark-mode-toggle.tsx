@@ -21,7 +21,7 @@ export default function DarkModeToggle() {
           variant="outline"
           size="icon"
           aria-label="Select theme"
-          className="relative h-9 w-9 rounded-[12px] border-border bg-background text-foreground hover:bg-muted transition active:scale-95 shadow-xs cursor-pointer"
+          className="relative h-9 w-9 rounded-full border border-white/50 dark:border-white/15 bg-white/60 dark:bg-white/[0.08] text-foreground hover:bg-white/80 dark:hover:bg-white/15 backdrop-blur-md transition active:scale-95 shadow-xs cursor-pointer"
         >
           <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
           <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -30,11 +30,11 @@ export default function DarkModeToggle() {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-44 rounded-xl border-border bg-popover text-popover-foreground shadow-md p-1 backdrop-blur-xl animate-in fade-in-80 zoom-in-95"
+        className="w-48 rounded-2xl border border-white/40 dark:border-white/15 bg-white/85 dark:bg-[#0c0c0e]/85 text-popover-foreground shadow-[0_20px_50px_rgba(0,0,0,0.2)] p-1.5 backdrop-blur-3xl backdrop-saturate-200 animate-in fade-in-80 zoom-in-95"
       >
         <DropdownMenuItem
           onClick={() => setTheme("light")}
-          className="flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded-lg text-xs font-medium focus:bg-accent focus:text-accent-foreground transition-colors"
+          className="flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded-xl text-xs font-medium focus:bg-accent/80 focus:text-accent-foreground transition-colors whitespace-nowrap"
         >
           <Sun className="h-4 w-4 text-amber-500 shrink-0" />
           <span>Light</span>
@@ -43,7 +43,7 @@ export default function DarkModeToggle() {
 
         <DropdownMenuItem
           onClick={() => setTheme("dark")}
-          className="flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded-lg text-xs font-medium focus:bg-accent focus:text-accent-foreground transition-colors"
+          className="flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded-xl text-xs font-medium focus:bg-accent/80 focus:text-accent-foreground transition-colors whitespace-nowrap"
         >
           <Moon className="h-4 w-4 text-blue-400 shrink-0" />
           <span>Dark</span>
@@ -52,11 +52,11 @@ export default function DarkModeToggle() {
 
         <DropdownMenuItem
           onClick={() => setTheme("system")}
-          className="flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded-lg text-xs font-medium focus:bg-accent focus:text-accent-foreground transition-colors"
+          className="flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded-xl text-xs font-medium focus:bg-accent/80 focus:text-accent-foreground transition-colors whitespace-nowrap"
         >
           <Monitor className="h-4 w-4 text-muted-foreground shrink-0" />
-          <span>System Default</span>
-          {theme === "system" && <Check className="ml-auto h-3.5 w-3.5 text-primary" />}
+          <span className="whitespace-nowrap">System Default</span>
+          {theme === "system" && <Check className="ml-auto h-3.5 w-3.5 text-primary shrink-0" />}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
