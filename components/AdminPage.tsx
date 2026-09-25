@@ -133,6 +133,15 @@ function formatDate(date: string | null) {
   }).format(new Date(date))
 }
 
+function formatVerificationStatus(status?: string) {
+  if (!status || status === 'yet to be verified' || status === 'pending verification') {
+    return 'Pending Verification'
+  }
+  if (status === 'verified') return 'Verified'
+  if (status === 'not verified') return 'Not Verified'
+  return status
+}
+
 function getVerificationBadgeClass(status?: string) {
   switch (status) {
     case 'verified':
@@ -496,49 +505,30 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background px-4 pb-20 pt-[110px] text-foreground md:px-6 md:pt-[140px] font-sans">
-      <div className="mx-auto max-w-6xl space-y-7">
-        {/* CLEAN HEADER & TOP METRICS */}
+    <main className="min-h-screen bg-background px-4 pb-20 pt-[110px] text-foreground md:px-8 md:pt-[140px] font-sans">
+      <div className="mx-auto max-w-[1360px] space-y-7">
+        {/* CLEAN SIMPLE HEADER */}
         <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-muted text-[11px] font-mono text-muted-foreground uppercase font-semibold">
-              <ShieldCheck className="size-3 text-primary" />
-              Admin Dashboard
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mt-1">
-              Syndicate Overview
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+              Deal Management
             </h1>
-          </div>
-
-          {/* Quick Metrics */}
-          <div className="flex items-center gap-2.5">
-            <div className="rounded-xl border border-border bg-card px-3.5 py-2 text-center min-w-[110px]">
-              <span className="text-[10px] font-mono uppercase text-muted-foreground block">Active SPV</span>
-              <span className="text-base font-bold text-foreground font-mono">Micro1 Inc.</span>
-            </div>
-            <div className="rounded-xl border border-border bg-card px-3.5 py-2 text-center min-w-[110px]">
-              <span className="text-[10px] font-mono uppercase text-muted-foreground block">Committed</span>
-              <span className="text-base font-bold text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">
-                ${commitmentStats.totalCommittedCapital.toLocaleString()}
-              </span>
-            </div>
-            <div className="rounded-xl border border-border bg-card px-3.5 py-2 text-center min-w-[100px]">
-              <span className="text-[10px] font-mono uppercase text-muted-foreground block">Investors</span>
-              <span className="text-base font-bold text-foreground font-mono tabular-nums">{users.length}</span>
-            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+              Manage allocations, investor verification statuses, and portal broadcasts.
+            </p>
           </div>
         </section>
 
         {/* DEAL CARDS SECTION WITH CLEAN ACTIVE / CLOSED FILTER */}
-        <section className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
             {/* Filter Toggle: All vs Active vs Closed */}
-            <div className="inline-flex rounded-xl border border-border bg-muted/40 p-1 text-xs font-mono">
+            <div className="inline-flex rounded-2xl border border-border bg-muted/40 p-1 text-xs">
               <button
                 type="button"
                 onClick={() => setDealFilter('all')}
                 className={cn(
-                  'px-3 py-1 rounded-lg font-medium transition cursor-pointer',
+                  'px-3.5 py-1.5 rounded-xl font-medium transition cursor-pointer',
                   dealFilter === 'all'
                     ? 'bg-background text-foreground font-bold shadow-xs'
                     : 'text-muted-foreground hover:text-foreground'
@@ -550,20 +540,20 @@ export default function AdminPage() {
                 type="button"
                 onClick={() => setDealFilter('active')}
                 className={cn(
-                  'px-3 py-1 rounded-lg font-medium transition cursor-pointer flex items-center gap-1.5',
+                  'px-3.5 py-1.5 rounded-xl font-medium transition cursor-pointer flex items-center gap-1.5',
                   dealFilter === 'active'
                     ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold shadow-xs'
                     : 'text-muted-foreground hover:text-foreground'
                 )}
               >
-                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
                 Active ({activeDealsCount})
               </button>
               <button
                 type="button"
                 onClick={() => setDealFilter('closed')}
                 className={cn(
-                  'px-3 py-1 rounded-lg font-medium transition cursor-pointer',
+                  'px-3.5 py-1.5 rounded-xl font-medium transition cursor-pointer',
                   dealFilter === 'closed'
                     ? 'bg-background text-foreground font-bold shadow-xs'
                     : 'text-muted-foreground hover:text-foreground'
@@ -573,10 +563,10 @@ export default function AdminPage() {
               </button>
             </div>
 
-            <span className="text-[11px] text-muted-foreground">Click card to isolate commitments</span>
+            <span className="text-xs text-muted-foreground font-medium">Click card to isolate commitments</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {displayedOfferings.map((deal) => {
               const isSelected = selectedOfferingId === deal.offeringId
               const isActive = deal.status === 'active' || deal.status === 'closing_soon'
@@ -586,45 +576,45 @@ export default function AdminPage() {
                   key={deal.offeringId}
                   onClick={() => setSelectedOfferingId(isSelected ? 'all' : deal.offeringId)}
                   className={cn(
-                    'group relative rounded-2xl border p-4 transition-all cursor-pointer flex flex-col justify-between gap-3',
+                    'group relative rounded-2xl border p-4.5 transition-all cursor-pointer flex flex-col justify-between gap-4 shadow-xs',
                     isSelected
-                      ? 'border-primary bg-primary/5 ring-1 ring-primary shadow-xs'
-                      : 'border-border bg-card hover:border-primary/40 hover:bg-muted/20'
+                      ? 'border-primary bg-primary/5 ring-2 ring-primary/30'
+                      : 'border-border bg-card hover:border-primary/40 hover:bg-muted/10'
                   )}
                 >
-                  <div>
+                  <div className="space-y-3">
                     {/* Top Row: Title + Status Tag */}
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors">
                           {deal.title}
                         </h3>
-                        <span className="text-[11px] font-mono text-muted-foreground block">
+                        <span className="text-xs text-muted-foreground font-medium block mt-0.5">
                           {deal.valuation} • Cap ${deal.targetAllocation.toLocaleString()}
                         </span>
                       </div>
 
                       {isActive ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
                           <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                           Active
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                        <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-muted text-muted-foreground shrink-0">
                           Distributed
                         </span>
                       )}
                     </div>
 
                     {/* Progress Bar & Amount */}
-                    <div className="mt-3 space-y-1 font-mono text-xs">
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs font-medium">
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">
                           ${deal.committedCapital.toLocaleString()}
                         </span>
-                        <span className="text-muted-foreground">{deal.percentFilled}% filled</span>
+                        <span className="text-muted-foreground font-semibold">{deal.percentFilled}% filled</span>
                       </div>
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                         <div
                           className={cn(
                             'h-full rounded-full transition-all',
@@ -636,22 +626,33 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  {/* Single Action Button */}
+                  {/* Single Action Button (Disabled for closed deals) */}
                   <div className="pt-1">
                     <Button
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleOpenBroadcastModal(deal)
+                        if (isActive) {
+                          handleOpenBroadcastModal(deal)
+                        }
                       }}
                       size="sm"
+                      disabled={!isActive}
                       variant={isActive ? 'default' : 'outline'}
                       className={cn(
-                        'w-full h-8 rounded-xl text-xs font-semibold gap-1.5',
-                        isActive && 'bg-foreground text-background hover:bg-foreground/90'
+                        'w-full h-9 rounded-xl text-xs font-semibold gap-2',
+                        isActive
+                          ? 'bg-foreground text-background hover:bg-foreground/90 cursor-pointer'
+                          : 'opacity-50 cursor-not-allowed bg-muted text-muted-foreground border-transparent shadow-none'
                       )}
                     >
-                      <Send className="size-3" />
-                      <span>{isActive ? 'Broadcast Link' : 'Portal Link'}</span>
+                      {isActive ? (
+                        <>
+                          <Send className="size-3.5" />
+                          <span>Broadcast Link</span>
+                        </>
+                      ) : (
+                        <span>Deal Closed</span>
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -661,12 +662,12 @@ export default function AdminPage() {
         </section>
 
         {/* PRIMARY TABS: COMMITMENTS VS INVESTORS */}
-        <div className="flex items-center justify-between border-b border-border pb-2.5">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between border-b border-border pb-3">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={() => setActiveTab('commitments')}
               className={cn(
-                'rounded-full px-4 py-1.5 text-xs font-semibold transition cursor-pointer',
+                'rounded-full px-4.5 py-2 text-xs font-semibold transition cursor-pointer',
                 activeTab === 'commitments'
                   ? 'bg-foreground text-background shadow-xs'
                   : 'bg-muted/50 text-muted-foreground hover:text-foreground'
@@ -677,7 +678,7 @@ export default function AdminPage() {
             <button
               onClick={() => setActiveTab('users')}
               className={cn(
-                'rounded-full px-4 py-1.5 text-xs font-semibold transition cursor-pointer',
+                'rounded-full px-4.5 py-2 text-xs font-semibold transition cursor-pointer',
                 activeTab === 'users'
                   ? 'bg-foreground text-background shadow-xs'
                   : 'bg-muted/50 text-muted-foreground hover:text-foreground'
@@ -692,9 +693,9 @@ export default function AdminPage() {
               onClick={handleExportCSV}
               variant="outline"
               size="sm"
-              className="h-8 rounded-full text-xs font-medium gap-1.5 px-3"
+              className="h-9 rounded-full text-xs font-semibold gap-2 px-3.5"
             >
-              <Download className="size-3 text-muted-foreground" />
+              <Download className="size-3.5 text-muted-foreground" />
               <span>Export CSV</span>
             </Button>
           )}
@@ -702,23 +703,23 @@ export default function AdminPage() {
 
         {/* TAB 1: COMMITMENTS & ALLOCATIONS */}
         {activeTab === 'commitments' && (
-          <section className="space-y-3">
+          <section className="space-y-4">
             {/* Unified Search & Filter Bar */}
-            <div className="flex flex-wrap items-center gap-2.5">
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[220px]">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="Search investor, email, phone, check amount..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-background py-1.5 pl-8 pr-3 text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                  className="w-full rounded-xl border border-border bg-background py-2 pl-9.5 pr-3 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none"
                 />
               </div>
 
-              <div className="w-[180px]">
+              <div className="w-[190px]">
                 <Select value={selectedOfferingId} onValueChange={setSelectedOfferingId}>
-                  <SelectTrigger className="h-8.5 rounded-xl text-xs">
+                  <SelectTrigger className="h-9.5 rounded-xl text-xs font-medium">
                     <SelectValue placeholder="All Deals" />
                   </SelectTrigger>
                   <SelectContent className="text-xs">
@@ -738,9 +739,9 @@ export default function AdminPage() {
                 </Select>
               </div>
 
-              <div className="w-[130px]">
+              <div className="w-[140px]">
                 <Select value={selectedType} onValueChange={(val: any) => setSelectedType(val)}>
-                  <SelectTrigger className="h-8.5 rounded-xl text-xs">
+                  <SelectTrigger className="h-9.5 rounded-xl text-xs font-medium">
                     <SelectValue placeholder="All Types" />
                   </SelectTrigger>
                   <SelectContent className="text-xs">
@@ -751,9 +752,9 @@ export default function AdminPage() {
                 </Select>
               </div>
 
-              <div className="w-[140px]">
+              <div className="w-[150px]">
                 <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger className="h-8.5 rounded-xl text-xs">
+                  <SelectTrigger className="h-9.5 rounded-xl text-xs font-medium">
                     <SelectValue placeholder="All Status" />
                   </SelectTrigger>
                   <SelectContent className="text-xs">
@@ -774,7 +775,7 @@ export default function AdminPage() {
                     setSelectedStatus('all')
                     setSearchQuery('')
                   }}
-                  className="text-xs text-primary hover:underline font-medium"
+                  className="text-xs text-primary hover:underline font-semibold cursor-pointer"
                 >
                   Reset
                 </button>
@@ -782,81 +783,96 @@ export default function AdminPage() {
             </div>
 
             {/* Commitments Table */}
-            <div className="overflow-hidden rounded-2xl border border-border bg-card">
+            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
               {isLoadingCommitments ? (
-                <div className="p-10 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
+                <div className="p-12 text-center text-sm text-muted-foreground flex items-center justify-center gap-2.5">
                   <Loader2 className="size-4 animate-spin" /> Loading records...
                 </div>
               ) : filteredCommitments.length === 0 ? (
-                <div className="p-10 text-center text-xs text-muted-foreground">
+                <div className="p-12 text-center text-sm text-muted-foreground">
                   No commitment records found matching your filters.
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-muted/40 font-mono text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-muted/50 text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border">
                       <tr>
-                        <th className="px-4 py-3 font-medium">Investor</th>
-                        <th className="px-4 py-3 font-medium">Offering</th>
-                        <th className="px-4 py-3 font-medium">Type</th>
-                        <th className="px-4 py-3 font-medium">Amount</th>
-                        <th className="px-4 py-3 font-medium">Verification</th>
-                        <th className="px-4 py-3 font-medium">Status</th>
-                        <th className="px-4 py-3 font-medium">Date</th>
+                        <th className="px-5 py-3.5">Investor</th>
+                        <th className="px-5 py-3.5">Offering</th>
+                        <th className="px-5 py-3.5">Type</th>
+                        <th className="px-5 py-3.5">Amount</th>
+                        <th className="px-5 py-3.5">Verification</th>
+                        <th className="px-5 py-3.5">Status</th>
+                        <th className="px-5 py-3.5">Date</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                       {filteredCommitments.map((item) => (
                         <tr key={item.id} className="hover:bg-muted/20 transition-colors">
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2.5">
-                              <div className="flex size-7 items-center justify-center rounded-full bg-muted font-bold text-[10px] text-muted-foreground shrink-0">
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="flex size-8 items-center justify-center rounded-full bg-muted font-bold text-xs text-foreground shrink-0 border border-border/50">
                                 {getInitials(item.userName)}
                               </div>
                               <div className="min-w-0">
-                                <p className="font-semibold text-foreground truncate">{item.userName}</p>
-                                <p className="text-[11px] text-muted-foreground truncate">{item.userEmail}</p>
+                                <p className="font-semibold text-foreground truncate text-sm">{item.userName}</p>
+                                <p className="text-xs text-muted-foreground truncate">{item.userEmail}</p>
                                 {item.userPhone && (
-                                  <p className="text-[10px] font-mono text-muted-foreground/80 flex items-center gap-1">
-                                    <Phone className="size-2.5" /> {item.userPhone}
+                                  <p className="text-xs text-muted-foreground/90 flex items-center gap-1 mt-0.5">
+                                    <Phone className="size-3 text-muted-foreground" /> {item.userPhone}
                                   </p>
                                 )}
                               </div>
                             </div>
                           </td>
 
-                          <td className="px-4 py-3 font-semibold text-foreground">{item.offeringTitle}</td>
+                          <td className="px-5 py-4 font-semibold text-foreground text-sm">{item.offeringTitle}</td>
 
-                          <td className="px-4 py-3">
+                          <td className="px-5 py-4">
                             {item.type === 'commitment' ? (
-                              <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold text-[11px]">
+                              <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold text-xs border border-emerald-500/20">
                                 Commitment
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold text-[11px]">
+                              <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold text-xs border border-blue-500/20">
                                 Interested
                               </span>
                             )}
                           </td>
 
-                          <td className="px-4 py-3 font-mono font-bold text-foreground tabular-nums">
+                          <td className="px-5 py-4 font-bold text-foreground tabular-nums text-sm">
                             {item.amount ? `$${item.amount.toLocaleString()}` : '—'}
                           </td>
 
-                          <td className="px-4 py-3">
-                            <span className={cn('px-2 py-0.5 rounded-full text-[10.5px] font-medium border capitalize', getVerificationBadgeClass(item.userVerificationStatus))}>
-                              {item.userVerificationStatus}
+                          <td className="px-5 py-4">
+                            <span
+                              className={cn(
+                                'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border whitespace-nowrap',
+                                getVerificationBadgeClass(item.userVerificationStatus)
+                              )}
+                            >
+                              <span
+                                className={cn(
+                                  'size-1.5 rounded-full',
+                                  item.userVerificationStatus === 'verified'
+                                    ? 'bg-emerald-500'
+                                    : item.userVerificationStatus === 'not verified'
+                                    ? 'bg-destructive'
+                                    : 'bg-amber-500'
+                                )}
+                              />
+                              {formatVerificationStatus(item.userVerificationStatus)}
                             </span>
                           </td>
 
-                          <td className="px-4 py-3">
-                            <div className="w-[145px]">
+                          <td className="px-5 py-4">
+                            <div className="w-[155px]">
                               <Select
                                 value={item.status || 'active'}
                                 onValueChange={(val) => handleCommitmentStatusChange(item.id, val)}
                                 disabled={updatingCommitmentId === item.id}
                               >
-                                <SelectTrigger className={cn('h-7 rounded-full border px-2.5 text-xs font-medium shadow-none', getCommitmentStatusBadgeClass(item.status))}>
+                                <SelectTrigger className={cn('h-8.5 rounded-xl border px-3 text-xs font-semibold shadow-none', getCommitmentStatusBadgeClass(item.status))}>
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="text-xs">
@@ -869,7 +885,7 @@ export default function AdminPage() {
                             </div>
                           </td>
 
-                          <td className="px-4 py-3 font-mono text-muted-foreground text-[11px]">
+                          <td className="px-5 py-4 text-muted-foreground text-xs font-medium">
                             {formatDate(item.createdAt)}
                           </td>
                         </tr>
@@ -884,59 +900,59 @@ export default function AdminPage() {
 
         {/* TAB 2: INVESTORS DIRECTORY */}
         {activeTab === 'users' && (
-          <section className="space-y-3">
-            <div className="relative max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+          <section className="space-y-4">
+            <div className="relative max-w-md">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search by name, email, phone..."
                 value={userSearchQuery}
                 onChange={(e) => setUserSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-border bg-background py-1.5 pl-8 pr-3 text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                className="w-full rounded-xl border border-border bg-background py-2 pl-9.5 pr-3 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none"
               />
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-border bg-card">
+            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
               {isLoadingUsers ? (
-                <div className="p-10 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
+                <div className="p-12 text-center text-sm text-muted-foreground flex items-center justify-center gap-2.5">
                   <Loader2 className="size-4 animate-spin" /> Loading investors...
                 </div>
               ) : filteredUsers.length === 0 ? (
-                <div className="p-10 text-center text-xs text-muted-foreground">
+                <div className="p-12 text-center text-sm text-muted-foreground">
                   No investors found.
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-muted/40 font-mono text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-muted/50 text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border">
                       <tr>
-                        <th className="px-4 py-3 font-medium">Investor</th>
-                        <th className="px-4 py-3 font-medium">Phone</th>
-                        <th className="px-4 py-3 font-medium">Accreditation</th>
-                        <th className="px-4 py-3 font-medium">Verification Status</th>
-                        <th className="px-4 py-3 font-medium">Joined</th>
+                        <th className="px-5 py-3.5">Investor</th>
+                        <th className="px-5 py-3.5">Phone</th>
+                        <th className="px-5 py-3.5">Accreditation</th>
+                        <th className="px-5 py-3.5">Verification Status</th>
+                        <th className="px-5 py-3.5">Joined</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                       {filteredUsers.map((user) => (
                         <tr key={user.id} className="hover:bg-muted/20 transition-colors">
-                          <td className="px-4 py-3">
-                            <p className="font-semibold text-foreground">{user.name}</p>
-                            <p className="text-[11px] text-muted-foreground">{user.email}</p>
+                          <td className="px-5 py-4">
+                            <p className="font-semibold text-foreground text-sm">{user.name}</p>
+                            <p className="text-xs text-muted-foreground">{user.email}</p>
                           </td>
 
-                          <td className="px-4 py-3 font-mono text-muted-foreground text-[11px]">
+                          <td className="px-5 py-4 text-muted-foreground text-xs font-medium">
                             {user.phoneNumber || '—'}
                           </td>
 
-                          <td className="px-4 py-3">
-                            <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground text-[11px]">
+                          <td className="px-5 py-4">
+                            <span className="px-3 py-1 rounded-lg bg-muted text-foreground text-xs font-medium">
                               {user.investorStatus}
                             </span>
                           </td>
 
-                          <td className="px-4 py-3">
-                            <div className="w-[170px]">
+                          <td className="px-5 py-4">
+                            <div className="w-[195px]">
                               <Select
                                 value={
                                   !user.verificationStatus || user.verificationStatus === 'yet to be verified'
@@ -946,19 +962,34 @@ export default function AdminPage() {
                                 onValueChange={(val) => handleVerificationChange(user.id, val)}
                                 disabled={updatingUserId === user.id}
                               >
-                                <SelectTrigger className={cn('h-7.5 rounded-full border px-2.5 text-xs font-medium', getVerificationBadgeClass(user.verificationStatus))}>
+                                <SelectTrigger className={cn('h-8.5 rounded-xl border px-3 text-xs font-semibold', getVerificationBadgeClass(user.verificationStatus))}>
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="text-xs">
-                                  <SelectItem value="verified">Verified</SelectItem>
-                                  <SelectItem value="pending verification">Pending verification</SelectItem>
-                                  <SelectItem value="not verified">Not verified</SelectItem>
+                                  <SelectItem value="verified">
+                                    <span className="flex items-center gap-1.5">
+                                      <span className="size-1.5 rounded-full bg-emerald-500" />
+                                      Verified
+                                    </span>
+                                  </SelectItem>
+                                  <SelectItem value="pending verification">
+                                    <span className="flex items-center gap-1.5">
+                                      <span className="size-1.5 rounded-full bg-amber-500" />
+                                      Pending Verification
+                                    </span>
+                                  </SelectItem>
+                                  <SelectItem value="not verified">
+                                    <span className="flex items-center gap-1.5">
+                                      <span className="size-1.5 rounded-full bg-destructive" />
+                                      Not Verified
+                                    </span>
+                                  </SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
                           </td>
 
-                          <td className="px-4 py-3 font-mono text-muted-foreground text-[11px]">
+                          <td className="px-5 py-4 text-muted-foreground text-xs font-medium">
                             {formatDate(user.createdAt)}
                           </td>
                         </tr>
@@ -985,7 +1016,7 @@ export default function AdminPage() {
                 <button
                   type="button"
                   onClick={() => setIsBroadcastModalOpen(false)}
-                  className="rounded-full p-1.5 text-muted-foreground hover:bg-muted"
+                  className="rounded-full p-1.5 text-muted-foreground hover:bg-muted cursor-pointer"
                 >
                   <X className="size-4" />
                 </button>
@@ -1004,19 +1035,19 @@ export default function AdminPage() {
                   {broadcastResult.whatsappRoster && broadcastResult.whatsappRoster.length > 0 && (
                     <div className="max-h-48 overflow-y-auto divide-y divide-border rounded-xl border border-border">
                       {broadcastResult.whatsappRoster.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2.5 text-xs">
+                        <div key={idx} className="flex items-center justify-between p-3 text-xs">
                           <div>
-                            <p className="font-semibold text-foreground">{item.userName}</p>
-                            <p className="text-[10px] font-mono text-muted-foreground">{item.userPhone || item.userEmail}</p>
+                            <p className="font-semibold text-foreground text-sm">{item.userName}</p>
+                            <p className="text-xs text-muted-foreground">{item.userPhone || item.userEmail}</p>
                           </div>
                           {item.whatsAppLink && (
                             <a
                               href={item.whatsAppLink}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-2.5 py-1 rounded-md bg-emerald-600 text-white font-semibold text-[10.5px] hover:bg-emerald-700 flex items-center gap-1"
+                              className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold text-xs hover:bg-emerald-700 flex items-center gap-1.5"
                             >
-                              <MessageSquare className="size-3" /> Chat
+                              <MessageSquare className="size-3.5" /> Chat
                             </a>
                           )}
                         </div>
@@ -1024,23 +1055,23 @@ export default function AdminPage() {
                     </div>
                   )}
 
-                  <Button onClick={() => setIsBroadcastModalOpen(false)} className="w-full rounded-xl text-xs font-semibold">
+                  <Button onClick={() => setIsBroadcastModalOpen(false)} className="w-full rounded-xl text-xs font-semibold h-10">
                     Done
                   </Button>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {/* Audience Toggle */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-mono">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       Target Audience
                     </label>
-                    <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="grid grid-cols-3 gap-2.5 text-xs">
                       <button
                         type="button"
                         onClick={() => handleAudienceChange('all_verified')}
                         className={cn(
-                          'p-2 rounded-xl border text-center font-medium transition',
+                          'p-2.5 rounded-xl border text-center font-medium transition cursor-pointer',
                           broadcastAudience === 'all_verified'
                             ? 'border-primary bg-primary/10 text-primary font-bold'
                             : 'border-border bg-muted/40 text-muted-foreground'
@@ -1052,7 +1083,7 @@ export default function AdminPage() {
                         type="button"
                         onClick={() => handleAudienceChange('commitments_only')}
                         className={cn(
-                          'p-2 rounded-xl border text-center font-medium transition',
+                          'p-2.5 rounded-xl border text-center font-medium transition cursor-pointer',
                           broadcastAudience === 'commitments_only'
                             ? 'border-primary bg-primary/10 text-primary font-bold'
                             : 'border-border bg-muted/40 text-muted-foreground'
@@ -1064,7 +1095,7 @@ export default function AdminPage() {
                         type="button"
                         onClick={() => handleAudienceChange('interests_only')}
                         className={cn(
-                          'p-2 rounded-xl border text-center font-medium transition',
+                          'p-2.5 rounded-xl border text-center font-medium transition cursor-pointer',
                           broadcastAudience === 'interests_only'
                             ? 'border-primary bg-primary/10 text-primary font-bold'
                             : 'border-border bg-muted/40 text-muted-foreground'
@@ -1077,7 +1108,7 @@ export default function AdminPage() {
 
                   {/* Third Party URL */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-mono">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       Third-Party Closing / Portal URL
                     </label>
                     <input
@@ -1085,13 +1116,13 @@ export default function AdminPage() {
                       placeholder="https://app.carta.com/spvs/..."
                       value={thirdPartyUrl}
                       onChange={(e) => setThirdPartyUrl(e.target.value)}
-                      className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs font-mono placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                      className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none"
                     />
                   </div>
 
                   {/* Custom Message */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-mono">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       Note from Admin (Optional)
                     </label>
                     <textarea
@@ -1104,9 +1135,9 @@ export default function AdminPage() {
                   </div>
 
                   {/* Recipients Preview */}
-                  <div className="rounded-xl border border-border bg-muted/20 p-3 text-xs flex items-center justify-between font-mono">
-                    <span className="text-muted-foreground">Verified Recipients:</span>
-                    <strong className="text-foreground">
+                  <div className="rounded-xl border border-border bg-muted/20 p-3 text-xs flex items-center justify-between">
+                    <span className="text-muted-foreground font-medium">Verified Recipients:</span>
+                    <strong className="text-foreground font-semibold">
                       {isPreviewLoading ? 'Loading...' : `${previewRecipients.length} Verified Investor(s)`}
                     </strong>
                   </div>
@@ -1118,7 +1149,7 @@ export default function AdminPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => setIsBroadcastModalOpen(false)}
-                      className="rounded-xl text-xs"
+                      className="rounded-xl text-xs h-9"
                       disabled={isSendingBroadcast}
                     >
                       Cancel
@@ -1128,7 +1159,7 @@ export default function AdminPage() {
                       size="sm"
                       onClick={handleSendBroadcast}
                       disabled={isSendingBroadcast || !thirdPartyUrl.trim() || previewRecipients.length === 0}
-                      className="rounded-xl text-xs font-semibold gap-1.5 px-4 bg-foreground text-background hover:bg-foreground/90"
+                      className="rounded-xl text-xs font-semibold gap-1.5 px-4 h-9 bg-foreground text-background hover:bg-foreground/90"
                     >
                       {isSendingBroadcast ? (
                         <>
@@ -1136,7 +1167,7 @@ export default function AdminPage() {
                         </>
                       ) : (
                         <>
-                          <Send className="size-3" /> Send ({previewRecipients.length})
+                          <Send className="size-3.5" /> Send ({previewRecipients.length})
                         </>
                       )}
                     </Button>
