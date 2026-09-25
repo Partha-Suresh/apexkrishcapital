@@ -7,6 +7,7 @@ import ThemeProvider from "@/components/theme-provider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { dark, neobrutalism, shadcn } from "@clerk/ui/themes";
+import ScrollRestorationManager from "@/components/ScrollRestorationManager";
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -19,8 +20,6 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-
-import ScrollRestorationManager from "@/components/ScrollRestorationManager";
 
 export const metadata: Metadata = {
   title: "Apex Krish Capital | Frontier Technology & Private Equity Investments",
@@ -46,6 +45,29 @@ export default function RootLayout({
         "font-sans"
       )}
     >
+      <head>
+        {/* Synchronous theme initialization script to prevent Flash of Incorrect Theme (FOIT) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var storedTheme = localStorage.getItem('theme');
+                  var supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  var isDark = storedTheme === 'dark' || (storedTheme !== 'light' && supportDarkMode);
+                  if (isDark) {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.style.colorScheme = 'dark';
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.style.colorScheme = 'light';
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
         <ScrollRestorationManager />
         <ThemeProvider>
@@ -62,4 +84,3 @@ export default function RootLayout({
     </html>
   );
 }
-

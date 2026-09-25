@@ -21,52 +21,53 @@ export function useTheme() {
 }
 
 export default function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("system");
-  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
+  const [theme, setThemeState] = useState<Theme>("system");
+  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("dark");
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(STORAGE_KEY) as Theme | null;
       if (saved === "light" || saved === "dark" || saved === "system") {
-        setTheme(saved);
-      } else {
-        setTheme("system");
+        setThemeState(saved);
       }
-    } catch (e) {
-      setTheme("system");
-    }
+    } catch (e) {}
   }, []);
+
+  const applyTheme = (t: Theme) => {
+    const root = document.documentElement;
+    const isDark =
+      t === "system"
+        ? window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+        : t === "dark";
+
+    setResolvedTheme(isDark ? "dark" : "light");
+
+    if (isDark) {
+      root.classList.add("dark");
+      root.style.colorScheme = "dark";
+    } else {
+      root.classList.remove("dark");
+      root.style.colorScheme = "light";
+    }
+  };
+
+  const setTheme = (newTheme: Theme) => {
+    setThemeState(newTheme);
+    try {
+      localStorage.setItem(STORAGE_KEY, newTheme);
+    } catch (e) {}
+    applyTheme(newTheme);
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const root = document.documentElement;
 
-    const getSystemPrefersDark = () =>
-      window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-
-    const apply = (t: Theme) => {
-      const isDark = t === "system" ? getSystemPrefersDark() : t === "dark";
-      setResolvedTheme(isDark ? "dark" : "light");
-
-      if (isDark) {
-        root.classList.add("dark");
-        root.style.colorScheme = "dark";
-      } else {
-        root.classList.remove("dark");
-        root.style.colorScheme = "light";
-      }
-    };
-
-    apply(theme);
-
-    try {
-      localStorage.setItem(STORAGE_KEY, theme);
-    } catch (e) {}
+    applyTheme(theme);
 
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const onChange = () => {
       if (theme === "system") {
-        apply("system");
+        applyTheme("system");
       }
     };
 
@@ -80,4 +81,3 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
     </ThemeContext.Provider>
   );
 }
-
