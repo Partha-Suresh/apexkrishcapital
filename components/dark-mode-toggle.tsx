@@ -21,7 +21,7 @@ export default function DarkModeToggle() {
           variant="outline"
           size="icon"
           aria-label="Select theme"
-          className="relative h-9 w-9 rounded-full border border-white/50 dark:border-white/15 bg-white/60 dark:bg-white/[0.08] text-foreground hover:bg-white/80 dark:hover:bg-white/15 backdrop-blur-md transition active:scale-95 shadow-xs cursor-pointer"
+          className="relative h-9 w-9 rounded-full border border-black/[0.05] dark:border-white/[0.08] bg-white/30 dark:bg-white/[0.06] text-foreground hover:bg-white/50 dark:hover:bg-white/10 backdrop-blur-md transition active:scale-95 shadow-xs cursor-pointer"
         >
           <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
           <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />

@@ -195,7 +195,7 @@ export default function OfferingsSection({
       {/* Header & Filter Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border pb-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 font-mono text-[10.5px] font-bold uppercase tracking-widest text-muted-foreground">
+          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             <span>PRIVATE SYNDICATE</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
@@ -207,7 +207,7 @@ export default function OfferingsSection({
         </div>
 
         {/* Tab Switcher */}
-        <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 self-start sm:self-auto font-mono text-xs">
+        <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 self-start sm:self-auto text-xs">
           <button
             onClick={() => setActiveTab("current")}
             className={cn(
@@ -236,7 +236,7 @@ export default function OfferingsSection({
 
       {/* Global Success Banner */}
       {successMessage && (
-        <div className="animate-in fade-in slide-in-from-top-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-800 dark:text-emerald-300 flex items-center gap-3 font-mono text-xs">
+        <div className="animate-in fade-in slide-in-from-top-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-800 dark:text-emerald-300 flex items-center gap-3 text-xs">
           <CheckCircle2 className="size-4 shrink-0 text-emerald-500" />
           <p className="font-medium">{successMessage}</p>
         </div>
@@ -248,9 +248,9 @@ export default function OfferingsSection({
           {/* Main Micro1 Card */}
           <div className="rounded-2xl border border-border bg-card text-card-foreground p-6 sm:p-8 shadow-xs relative">
             {/* Top Badge Strip */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-border font-mono text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-border text-xs">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20 uppercase tracking-wider text-[10.5px]">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20 uppercase tracking-wider text-[11px]">
                   <span className="size-1.5 rounded-full bg-emerald-500" />
                   Active Offering
                 </span>
@@ -264,83 +264,83 @@ export default function OfferingsSection({
 
             {/* Main Info */}
             <div className="mt-7 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              <div className="lg:col-span-7 space-y-4">
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground tracking-wide">
-                    Equity: Direct shares in Micro1 Inc.
+              <div className="lg:col-span-7 space-y-5">
+                <div className="space-y-1.5">
+                  <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 tracking-wide uppercase">
+                    Active SPV Allocation
                   </p>
-                  <h3 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
+                  <h3 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
                     Micro1 Inc.
                   </h3>
                 </div>
 
-                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                  Micro1 provides AI-driven technical vetting and global talent infrastructure, powering developer teams at top hyper-growth tech companies. Direct secondary share access via Apex Krish Capital syndicate.
+                <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
+                  Micro1 provides AI-driven technical hiring and engineer vetting infrastructure, powering developer teams at top hyper-growth tech companies.
                 </p>
 
-                {/* Key Offering Terms Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3">
-                  <div className="rounded-2xl border border-border/80 bg-muted/40 p-3.5">
-                    <span className="text-[10px] font-mono uppercase text-muted-foreground block">
+                {/* Key Offering Terms Grid - High Legibility */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 pt-2">
+                  <div className="rounded-2xl border border-border/80 bg-muted/40 p-4 space-y-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
                       Valuation
                     </span>
-                    <p className="text-base font-semibold text-foreground mt-0.5 tabular-nums">
+                    <p className="text-xl font-bold text-foreground tabular-nums">
                       $3.7B
                     </p>
-                    <span className="text-[10px] text-muted-foreground">Pre-money</span>
+                    <span className="text-xs text-muted-foreground">Pre-money round</span>
                   </div>
 
-                  <div className="rounded-2xl border border-border/80 bg-muted/40 p-3.5">
-                    <span className="text-[10px] font-mono uppercase text-muted-foreground block">
+                  <div className="rounded-2xl border border-border/80 bg-muted/40 p-4 space-y-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
                       Funding Goal
                     </span>
-                    <p className="text-base font-semibold text-foreground mt-0.5 tabular-nums">
+                    <p className="text-xl font-bold text-foreground tabular-nums">
                       $125K
                     </p>
-                    <span className="text-[10px] text-muted-foreground">Allocation cap</span>
+                    <span className="text-xs text-muted-foreground">Allocation cap</span>
                   </div>
 
-                  <div className="rounded-2xl border border-border/80 bg-muted/40 p-3.5">
-                    <span className="text-[10px] font-mono uppercase text-muted-foreground block">
+                  <div className="rounded-2xl border border-border/80 bg-muted/40 p-4 space-y-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
                       Minimum Check
                     </span>
-                    <p className="text-base font-semibold text-foreground mt-0.5 tabular-nums">
+                    <p className="text-xl font-bold text-foreground tabular-nums">
                       $5K
                     </p>
-                    <span className="text-[10px] text-muted-foreground">USD per investor</span>
+                    <span className="text-xs text-muted-foreground">USD accredited entry</span>
                   </div>
 
-                  <div className="rounded-2xl border border-border/80 bg-muted/40 p-3.5">
-                    <span className="text-[10px] font-mono uppercase text-muted-foreground block">
+                  <div className="rounded-2xl border border-border/80 bg-muted/40 p-4 space-y-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
                       Eligibility
                     </span>
-                    <p className="text-base font-semibold text-foreground mt-0.5">
+                    <p className="text-xl font-bold text-foreground">
                       Accredited
                     </p>
-                    <span className="text-[10px] text-muted-foreground">506(c) verified</span>
+                    <span className="text-xs text-muted-foreground">SEC 506(c)</span>
                   </div>
                 </div>
               </div>
 
               {/* Action Box / Status Panel */}
-              <div className="lg:col-span-5 rounded-2xl border border-border bg-muted/30 p-5 sm:p-6 space-y-4">
+              <div className="lg:col-span-5 rounded-2xl border border-border bg-muted/30 p-6 space-y-5">
                 <div className="flex items-center justify-between pb-3 border-b border-border/60">
-                  <span className="text-xs font-mono font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Participation Status
                   </span>
                   {isVerified ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold">
-                      <CheckCircle2 className="size-3" />
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
+                      <CheckCircle2 className="size-3.5" />
                       Verified Investor
                     </span>
                   ) : isSignedIn ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[11px] font-semibold">
-                      <AlertCircle className="size-3" />
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold">
+                      <AlertCircle className="size-3.5" />
                       Verification Pending
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground text-[11px] font-semibold">
-                      <Lock className="size-3" />
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted text-muted-foreground text-xs font-bold">
+                      <Lock className="size-3.5" />
                       Public Preview
                     </span>
                   )}
@@ -348,28 +348,28 @@ export default function OfferingsSection({
 
                 {/* State-specific CTA / Notice */}
                 {!isSignedIn ? (
-                  <div className="space-y-3 pt-1">
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      All offering details are publicly visible. To express interest or commit capital to Micro1 Inc., please sign in as an accredited investor.
+                  <div className="space-y-4 pt-1">
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      To express interest or commit capital to Micro1 Inc., sign in with your accredited investor account.
                     </p>
-                    <div className="pt-1">
-                      <Button asChild className="w-full h-10 rounded-xl font-semibold text-xs uppercase tracking-wider shadow-xs">
+                    <div>
+                      <Button asChild className="w-full h-11 rounded-full font-bold text-sm tracking-wide shadow-xs">
                         <Link href="/sign-in">Log in to participate</Link>
                       </Button>
                     </div>
                   </div>
                 ) : isPending ? (
-                  <div className="space-y-3 pt-1">
-                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-900 dark:text-amber-300 leading-relaxed space-y-1.5">
-                      <div className="flex items-center gap-2 font-semibold">
+                  <div className="space-y-4 pt-1">
+                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-900 dark:text-amber-300 leading-relaxed space-y-2">
+                      <div className="flex items-center gap-2 font-bold">
                         <AlertCircle className="size-4 shrink-0 text-amber-500" />
-                        Administrator Verification Required
+                        Verification in Review
                       </div>
-                      <p>
-                        Your investor profile is pending review by our administrator. Once verified, direct investment commitments and deal interest buttons will be unlocked.
+                      <p className="text-xs">
+                        Your accredited profile is pending admin approval. Once approved, you can commit capital directly.
                       </p>
                     </div>
-                    <Button asChild variant="outline" className="w-full h-10 rounded-xl text-xs font-semibold uppercase tracking-wider">
+                    <Button asChild variant="outline" className="w-full h-11 rounded-full text-xs font-bold uppercase tracking-wider">
                       <Link href="/profile">Review Investor Profile</Link>
                     </Button>
                   </div>
@@ -377,25 +377,25 @@ export default function OfferingsSection({
                   <div className="space-y-4 pt-1">
                     {/* User has committed or expressed interest banner */}
                     {micro1Interaction?.type === "commitment" ? (
-                      <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-900 dark:text-emerald-300 space-y-1">
-                        <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-bold block">
+                      <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-900 dark:text-emerald-300 space-y-1.5">
+                        <span className="text-xs uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-bold block">
                           Active Allocation Request
                         </span>
-                        <p className="text-lg font-bold text-foreground">
+                        <p className="text-xl font-bold text-foreground">
                           ${micro1Interaction.amount?.toLocaleString()} USD Committed
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Our closing team will reach out with wire instructions and subscription documents prior to the Sept 30th deadline.
+                          Our closing team will provide wire instructions and subscription documents prior to the deadline.
                         </p>
                       </div>
                     ) : micro1Interaction?.type === "interest" ? (
-                      <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-3.5 text-blue-900 dark:text-blue-300 space-y-1 text-xs">
-                        <div className="flex items-center gap-1.5 font-semibold">
+                      <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 text-blue-900 dark:text-blue-300 space-y-1 text-sm">
+                        <div className="flex items-center gap-2 font-bold">
                           <CheckCircle2 className="size-4 text-blue-500" />
-                          Interest Expressed
+                          Interest Recorded
                         </div>
-                        <p className="text-muted-foreground">
-                          You are on the priority list for this SPV. You can also formalize your dollar commitment below.
+                        <p className="text-xs text-muted-foreground">
+                          You are on the priority list. You can also formalize your dollar commitment below.
                         </p>
                       </div>
                     ) : null}
@@ -404,9 +404,9 @@ export default function OfferingsSection({
                     <div className="flex flex-col gap-2.5 w-full">
                       <Button
                         onClick={openCommitModal}
-                        className="w-full h-10 px-4 rounded-xl text-xs font-semibold uppercase tracking-wider shadow-xs inline-flex items-center justify-center gap-2"
+                        className="w-full h-11 px-4 rounded-full text-xs font-bold uppercase tracking-wider shadow-xs inline-flex items-center justify-center gap-2"
                       >
-                        <DollarSign className="size-3.5" />
+                        <DollarSign className="size-4" />
                         <span>
                           {micro1Interaction?.type === "commitment" ? "Update Commitment" : "Commit Capital"}
                         </span>
@@ -417,12 +417,12 @@ export default function OfferingsSection({
                           variant={micro1Interaction?.type === "interest" ? "secondary" : "outline"}
                           onClick={() => handleExpressInterest("micro1-inc")}
                           disabled={isExpressingInterest}
-                          className="w-full h-10 px-4 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all inline-flex items-center justify-center gap-2"
+                          className="w-full h-11 px-4 rounded-full text-xs font-bold uppercase tracking-wider transition-all inline-flex items-center justify-center gap-2"
                         >
                           {isExpressingInterest ? (
-                            <Loader2 className="size-3.5 animate-spin" />
+                            <Loader2 className="size-4 animate-spin" />
                           ) : micro1Interaction?.type === "interest" ? (
-                            <CheckCircle2 className="size-3.5 text-primary" />
+                            <CheckCircle2 className="size-4 text-primary" />
                           ) : null}
                           <span>
                             {micro1Interaction?.type === "interest" ? "Interested ✓" : "I'm Interested"}
@@ -440,87 +440,87 @@ export default function OfferingsSection({
 
       {/* TAB CONTENT: PAST OFFERINGS */}
       {activeTab === "past" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {/* Scale AI */}
-          <div className="rounded-xl border border-border bg-card text-card-foreground p-5 shadow-xs space-y-3">
-            <div className="flex items-center justify-between pb-2.5 border-b border-border font-mono text-xs">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-muted/60 text-muted-foreground border border-border">
+          <div className="rounded-2xl border border-border bg-card text-card-foreground p-6 shadow-xs space-y-3.5">
+            <div className="flex items-center justify-between pb-3 border-b border-border text-xs font-bold">
+              <span className="uppercase tracking-wider px-2.5 py-1 rounded-md bg-muted/60 text-foreground border border-border">
                 Series F SPV
               </span>
-              <span className="text-muted-foreground">
-                Funded
+              <span className="text-emerald-600 dark:text-emerald-400">
+                Funded & Closed
               </span>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-foreground">Scale AI</h3>
-              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                Foundational AI data infrastructure & model validation platform. Direct SPV secondary syndicate.
+              <h3 className="text-xl font-bold text-foreground">Scale AI</h3>
+              <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                Foundational AI data infrastructure and model validation platform.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-2 pt-1 text-center font-mono text-xs">
-              <div className="rounded-lg bg-muted/30 border border-border/60 p-2">
-                <span className="text-[10px] uppercase text-muted-foreground block">Valuation</span>
-                <p className="font-bold text-foreground">$14.0B</p>
+            <div className="grid grid-cols-2 gap-2.5 pt-2 text-center text-xs font-semibold">
+              <div className="rounded-xl bg-muted/30 border border-border/60 p-3 space-y-0.5">
+                <span className="text-xs uppercase text-muted-foreground block font-bold">Valuation</span>
+                <p className="text-base font-bold text-foreground">$14.0B</p>
               </div>
-              <div className="rounded-lg bg-muted/30 border border-border/60 p-2">
-                <span className="text-[10px] uppercase text-muted-foreground block">Status</span>
-                <p className="font-bold text-emerald-600 dark:text-emerald-400">Distributed</p>
+              <div className="rounded-xl bg-muted/30 border border-border/60 p-3 space-y-0.5">
+                <span className="text-xs uppercase text-muted-foreground block font-bold">Status</span>
+                <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">Distributed</p>
               </div>
             </div>
           </div>
 
           {/* xAI */}
-          <div className="rounded-xl border border-border bg-card text-card-foreground p-5 shadow-xs space-y-3">
-            <div className="flex items-center justify-between pb-2.5 border-b border-border font-mono text-xs">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-muted/60 text-muted-foreground border border-border">
+          <div className="rounded-2xl border border-border bg-card text-card-foreground p-6 shadow-xs space-y-3.5">
+            <div className="flex items-center justify-between pb-3 border-b border-border text-xs font-bold">
+              <span className="uppercase tracking-wider px-2.5 py-1 rounded-md bg-muted/60 text-foreground border border-border">
                 Series B SPV
               </span>
-              <span className="text-muted-foreground">
-                Funded
+              <span className="text-emerald-600 dark:text-emerald-400">
+                Funded & Closed
               </span>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-foreground">xAI</h3>
-              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                Frontier artificial intelligence research, Grok models, and high-performance supercomputing clusters.
+              <h3 className="text-xl font-bold text-foreground">xAI</h3>
+              <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                Frontier artificial intelligence research, Grok models, and supercomputing clusters.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-2 pt-1 text-center font-mono text-xs">
-              <div className="rounded-lg bg-muted/30 border border-border/60 p-2">
-                <span className="text-[10px] uppercase text-muted-foreground block">Valuation</span>
-                <p className="font-bold text-foreground">$24.0B</p>
+            <div className="grid grid-cols-2 gap-2.5 pt-2 text-center text-xs font-semibold">
+              <div className="rounded-xl bg-muted/30 border border-border/60 p-3 space-y-0.5">
+                <span className="text-xs uppercase text-muted-foreground block font-bold">Valuation</span>
+                <p className="text-base font-bold text-foreground">$24.0B</p>
               </div>
-              <div className="rounded-lg bg-muted/30 border border-border/60 p-2">
-                <span className="text-[10px] uppercase text-muted-foreground block">Status</span>
-                <p className="font-bold text-emerald-600 dark:text-emerald-400">Distributed</p>
+              <div className="rounded-xl bg-muted/30 border border-border/60 p-3 space-y-0.5">
+                <span className="text-xs uppercase text-muted-foreground block font-bold">Status</span>
+                <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">Distributed</p>
               </div>
             </div>
           </div>
 
           {/* Neuralink */}
-          <div className="rounded-xl border border-border bg-card text-card-foreground p-5 shadow-xs space-y-3">
-            <div className="flex items-center justify-between pb-2.5 border-b border-border font-mono text-xs">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-muted/60 text-muted-foreground border border-border">
+          <div className="rounded-2xl border border-border bg-card text-card-foreground p-6 shadow-xs space-y-3.5">
+            <div className="flex items-center justify-between pb-3 border-b border-border text-xs font-bold">
+              <span className="uppercase tracking-wider px-2.5 py-1 rounded-md bg-muted/60 text-foreground border border-border">
                 Direct SPV
               </span>
-              <span className="text-muted-foreground">
-                Funded
+              <span className="text-emerald-600 dark:text-emerald-400">
+                Funded & Closed
               </span>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-foreground">Neuralink</h3>
-              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                Brain-computer interface (BCI) technology restoring autonomy and pioneering human-AI integration.
+              <h3 className="text-xl font-bold text-foreground">Neuralink</h3>
+              <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                Brain-computer interface (BCI) technology restoring autonomy and neural function.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-2 pt-1 text-center font-mono text-xs">
-              <div className="rounded-lg bg-muted/30 border border-border/60 p-2">
-                <span className="text-[10px] uppercase text-muted-foreground block">Valuation</span>
-                <p className="font-bold text-foreground">$7.0B</p>
+            <div className="grid grid-cols-2 gap-2.5 pt-2 text-center text-xs font-semibold">
+              <div className="rounded-xl bg-muted/30 border border-border/60 p-3 space-y-0.5">
+                <span className="text-xs uppercase text-muted-foreground block font-bold">Valuation</span>
+                <p className="text-base font-bold text-foreground">$7.0B</p>
               </div>
-              <div className="rounded-lg bg-muted/30 border border-border/60 p-2">
-                <span className="text-[10px] uppercase text-muted-foreground block">Status</span>
-                <p className="font-bold text-emerald-600 dark:text-emerald-400">Distributed</p>
+              <div className="rounded-xl bg-muted/30 border border-border/60 p-3 space-y-0.5">
+                <span className="text-xs uppercase text-muted-foreground block font-bold">Status</span>
+                <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">Distributed</p>
               </div>
             </div>
           </div>
@@ -531,10 +531,10 @@ export default function OfferingsSection({
       {commitModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="w-full max-w-lg rounded-2xl border border-border bg-card text-card-foreground p-6 sm:p-7 shadow-xl space-y-5 font-sans">
-            <div className="flex items-center justify-between pb-3 border-b border-border font-mono">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
               <div>
-                <span className="text-[10.5px] uppercase tracking-wider text-muted-foreground font-bold">
-                  {micro1Interaction?.type === "commitment" ? "UPDATE ALLOCATION COMMITMENT" : "CAPITAL COMMITMENT"}
+                <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                  {micro1Interaction?.type === "commitment" ? "Update Allocation Commitment" : "Capital Commitment"}
                 </span>
                 <h3 className="text-lg font-bold text-foreground mt-0.5">
                   Micro1 Inc. SPV Series
@@ -550,7 +550,7 @@ export default function OfferingsSection({
             </div>
 
             {/* Terms reminder */}
-            <div className="rounded-xl border border-border bg-muted/40 p-3.5 text-xs text-muted-foreground space-y-1 font-mono">
+            <div className="rounded-xl border border-border bg-muted/40 p-3.5 text-xs text-muted-foreground space-y-1">
               <div className="flex justify-between">
                 <span>Minimum Investment:</span>
                 <strong className="text-foreground">$5,000 USD</strong>
@@ -597,7 +597,7 @@ export default function OfferingsSection({
                     type="button"
                     onClick={() => setCommitAmount(preset.toString())}
                     className={cn(
-                      "px-3 py-1.5 rounded-lg border text-xs font-mono font-medium transition cursor-pointer",
+                      "px-3 py-1.5 rounded-lg border text-xs font-medium transition cursor-pointer",
                       Number(commitAmount) === preset
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-border bg-muted/40 text-muted-foreground hover:text-foreground"

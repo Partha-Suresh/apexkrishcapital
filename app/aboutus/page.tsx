@@ -12,15 +12,15 @@ export default function AboutPage() {
       <main className="mx-auto w-full max-w-[800px] px-4 sm:px-6 pt-28 pb-16 space-y-12">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+          className="inline-flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors font-medium"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Test Build Home</span>
+          <span>Back to Home</span>
         </Link>
 
         {/* Hero */}
         <div className="space-y-4 text-center sm:text-left">
-          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+          <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
             ABOUT APEX KRISH CAPITAL
           </span>
           <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
