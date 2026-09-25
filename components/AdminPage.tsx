@@ -35,6 +35,7 @@ import {
   FileText,
   Eye,
   Globe,
+  RotateCcw,
 } from 'lucide-react'
 import {
   Select,
@@ -43,6 +44,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -218,6 +225,24 @@ function formatApplicationStatus(status?: string) {
   }
 }
 
+const STAGES = [
+  "Seed",
+  "Series A",
+  "Series B",
+  "Series C+",
+  "Pre-IPO",
+  "Profitable Bootstrapped",
+]
+
+const DEFAULT_SECTORS = [
+  "AI & Machine Learning",
+  "Autonomous Agents & Robotics",
+  "Enterprise Infrastructure",
+  "Defense & Aerospace",
+  "Fintech & Crypto",
+  "Frontier Tech & Bio",
+]
+
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<'commitments' | 'users' | 'founder_applications'>('commitments')
 
@@ -249,8 +274,13 @@ export default function AdminPage() {
   const [applicationError, setApplicationError] = useState<string | null>(null)
   const [updatingAppId, setUpdatingAppId] = useState<string | null>(null)
   const [appSearchQuery, setAppSearchQuery] = useState('')
-  const [appStatusFilter, setAppStatusFilter] = useState<string>('all')
   const [selectedApplication, setSelectedApplication] = useState<AdminFounderApplication | null>(null)
+
+  // Multi-dimensional filter children for founder applications
+  const [appStatusFilter, setAppStatusFilter] = useState<string>('all')
+  const [appStageFilter, setAppStageFilter] = useState<string>('all')
+  const [appSectorFilter, setAppSectorFilter] = useState<string>('all')
+  const [appDeckFilter, setAppDeckFilter] = useState<'all' | 'has_deck' | 'no_deck'>('all')
 
   // Deal Cards Filter: All vs Active vs Closed
   const [dealFilter, setDealFilter] = useState<'all' | 'active' | 'closed'>('all')
@@ -544,22 +574,66 @@ export default function AdminPage() {
     })
   }, [users, userSearchQuery])
 
-  // Filtered Founder Applications
+  // Distinct sectors from applications + defaults
+  const availableSectors = useMemo(() => {
+    const set = new Set<string>(DEFAULT_SECTORS)
+    founderApplications.forEach((a) => {
+      if (a.sector) set.add(a.sector)
+    })
+    return Array.from(set)
+  }, [founderApplications])
+
+  // Count active filters for applications
+  const activeAppFiltersCount = useMemo(() => {
+    let count = 0
+    if (appStatusFilter !== 'all') count++
+    if (appStageFilter !== 'all') count++
+    if (appSectorFilter !== 'all') count++
+    if (appDeckFilter !== 'all') count++
+    return count
+  }, [appStatusFilter, appStageFilter, appSectorFilter, appDeckFilter])
+
+  const handleResetAllAppFilters = () => {
+    setAppStatusFilter('all')
+    setAppStageFilter('all')
+    setAppSectorFilter('all')
+    setAppDeckFilter('all')
+    setAppSearchQuery('')
+  }
+
+  // Filtered Founder Applications with multi-dimensional filters
   const filteredFounderApplications = useMemo(() => {
     return founderApplications.filter((app) => {
+      // 1. Status Filter
       if (appStatusFilter !== 'all' && app.status !== appStatusFilter) return false
+
+      // 2. Stage Filter
+      if (appStageFilter !== 'all' && app.stage.toLowerCase() !== appStageFilter.toLowerCase()) return false
+
+      // 3. Sector Filter
+      if (appSectorFilter !== 'all' && app.sector.toLowerCase() !== appSectorFilter.toLowerCase()) return false
+
+      // 4. Deck Filter
+      if (appDeckFilter === 'has_deck' && !app.pitchDeckUrl) return false
+      if (appDeckFilter === 'no_deck' && app.pitchDeckUrl) return false
+
+      // 5. Search query
       if (appSearchQuery.trim()) {
         const query = appSearchQuery.trim().toLowerCase()
         const compMatch = app.companyName.toLowerCase().includes(query)
         const founderMatch = app.founderName.toLowerCase().includes(query)
         const emailMatch = app.workEmail.toLowerCase().includes(query)
+        const phoneMatch = app.phoneNumber ? app.phoneNumber.toLowerCase().includes(query) : false
         const stageMatch = app.stage.toLowerCase().includes(query)
         const sectorMatch = app.sector.toLowerCase().includes(query)
-        if (!compMatch && !founderMatch && !emailMatch && !stageMatch && !sectorMatch) return false
+        const summaryMatch = app.summary.toLowerCase().includes(query)
+        if (!compMatch && !founderMatch && !emailMatch && !phoneMatch && !stageMatch && !sectorMatch && !summaryMatch) {
+          return false
+        }
       }
       return true
     })
-  }, [founderApplications, appStatusFilter, appSearchQuery])
+  }, [founderApplications, appStatusFilter, appStageFilter, appSectorFilter, appDeckFilter, appSearchQuery])
 
   // Export CSV
   function handleExportCSV() {
@@ -1117,33 +1191,257 @@ export default function AdminPage() {
         {/* TAB 3: FOUNDER & COMPANY APPLICATIONS */}
         {activeTab === 'founder_applications' && (
           <section className="space-y-4">
+            {/* Top Search and Multi-Dimensional Filter Bar */}
             <div className="flex flex-wrap items-center gap-3">
+              {/* Search Bar */}
               <div className="relative flex-1 min-w-[240px]">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Search company, founder, work email, stage, sector..."
+                  placeholder="Search company, founder, work email, stage, sector, thesis..."
                   value={appSearchQuery}
                   onChange={(e) => setAppSearchQuery(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-background py-2 pl-9.5 pr-3 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                  className="w-full rounded-xl border border-border bg-background py-2 pl-9.5 pr-3 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none shadow-xs"
                 />
               </div>
 
-              <div className="w-[180px]">
-                <Select value={appStatusFilter} onValueChange={setAppStatusFilter}>
-                  <SelectTrigger className="h-9.5 rounded-xl text-xs font-medium">
-                    <SelectValue placeholder="All Statuses" />
-                  </SelectTrigger>
-                  <SelectContent className="text-xs">
-                    <SelectItem value="all">All Statuses ({founderApplications.length})</SelectItem>
-                    <SelectItem value="pending_review">Pending Review</SelectItem>
-                    <SelectItem value="reviewed">Reviewed</SelectItem>
-                    <SelectItem value="approved">Approved / In Diligence</SelectItem>
-                    <SelectItem value="archived">Archived / Passed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Single Multi-Dimensional Filter Button */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "h-9.5 rounded-xl text-xs font-semibold gap-2 px-3.5 cursor-pointer transition-all border shadow-xs",
+                      activeAppFiltersCount > 0
+                        ? "border-primary/50 bg-primary/10 text-primary hover:bg-primary/15"
+                        : "border-border bg-card text-foreground hover:bg-muted"
+                    )}
+                  >
+                    <Filter className="size-3.5" />
+                    <span>Filters</span>
+                    {activeAppFiltersCount > 0 && (
+                      <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
+                        {activeAppFiltersCount}
+                      </span>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent
+                  align="end"
+                  className="w-80 sm:w-96 rounded-2xl border border-border bg-card/95 text-card-foreground p-4 shadow-2xl backdrop-blur-2xl space-y-4 font-sans"
+                >
+                  <div className="flex items-center justify-between pb-2 border-b border-border/80">
+                    <div className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider text-foreground">
+                      <SlidersHorizontal className="size-3.5 text-primary" />
+                      <span>Filter Applications</span>
+                    </div>
+
+                    {activeAppFiltersCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleResetAllAppFilters}
+                        className="text-[11px] text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1 font-semibold cursor-pointer"
+                      >
+                        <RotateCcw className="size-3" />
+                        <span>Reset All</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Child Filter 1: Status */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Review Status
+                    </label>
+                    <Select value={appStatusFilter} onValueChange={setAppStatusFilter}>
+                      <SelectTrigger className="h-8.5 rounded-xl text-xs font-medium bg-background">
+                        <SelectValue placeholder="All Statuses" />
+                      </SelectTrigger>
+                      <SelectContent className="text-xs">
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="pending_review">
+                          <span className="flex items-center gap-1.5">
+                            <span className="size-1.5 rounded-full bg-amber-500" />
+                            Pending Review
+                          </span>
+                        </SelectItem>
+                        <SelectItem value="reviewed">
+                          <span className="flex items-center gap-1.5">
+                            <span className="size-1.5 rounded-full bg-blue-500" />
+                            Reviewed
+                          </span>
+                        </SelectItem>
+                        <SelectItem value="approved">
+                          <span className="flex items-center gap-1.5">
+                            <span className="size-1.5 rounded-full bg-emerald-500" />
+                            Approved / In Diligence
+                          </span>
+                        </SelectItem>
+                        <SelectItem value="archived">
+                          <span className="flex items-center gap-1.5">
+                            <span className="size-1.5 rounded-full bg-muted-foreground" />
+                            Archived / Passed
+                          </span>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Child Filter 2: Company Stage */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Funding Stage
+                    </label>
+                    <Select value={appStageFilter} onValueChange={setAppStageFilter}>
+                      <SelectTrigger className="h-8.5 rounded-xl text-xs font-medium bg-background">
+                        <SelectValue placeholder="All Stages" />
+                      </SelectTrigger>
+                      <SelectContent className="text-xs">
+                        <SelectItem value="all">All Stages</SelectItem>
+                        {STAGES.map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Child Filter 3: Sector / Industry */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Sector / Conviction Area
+                    </label>
+                    <Select value={appSectorFilter} onValueChange={setAppSectorFilter}>
+                      <SelectTrigger className="h-8.5 rounded-xl text-xs font-medium bg-background">
+                        <SelectValue placeholder="All Sectors" />
+                      </SelectTrigger>
+                      <SelectContent className="text-xs">
+                        <SelectItem value="all">All Sectors</SelectItem>
+                        {availableSectors.map((sec) => (
+                          <SelectItem key={sec} value={sec}>
+                            {sec}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Child Filter 4: Pitch Deck Attachment */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Pitch Deck / Materials
+                    </label>
+                    <div className="grid grid-cols-3 gap-1.5 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setAppDeckFilter('all')}
+                        className={cn(
+                          "py-1.5 px-2 rounded-lg border text-center font-medium transition cursor-pointer text-[11px]",
+                          appDeckFilter === 'all'
+                            ? "bg-primary text-primary-foreground font-bold border-primary"
+                            : "bg-background text-muted-foreground hover:text-foreground border-border"
+                        )}
+                      >
+                        All
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAppDeckFilter('has_deck')}
+                        className={cn(
+                          "py-1.5 px-2 rounded-lg border text-center font-medium transition cursor-pointer text-[11px]",
+                          appDeckFilter === 'has_deck'
+                            ? "bg-primary text-primary-foreground font-bold border-primary"
+                            : "bg-background text-muted-foreground hover:text-foreground border-border"
+                        )}
+                      >
+                        Has Deck
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAppDeckFilter('no_deck')}
+                        className={cn(
+                          "py-1.5 px-2 rounded-lg border text-center font-medium transition cursor-pointer text-[11px]",
+                          appDeckFilter === 'no_deck'
+                            ? "bg-primary text-primary-foreground font-bold border-primary"
+                            : "bg-background text-muted-foreground hover:text-foreground border-border"
+                        )}
+                      >
+                        No Deck
+                      </button>
+                    </div>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
+
+            {/* Active Filter Tags Row (Dismissible) */}
+            {activeAppFiltersCount > 0 && (
+              <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                <span className="text-muted-foreground font-medium">Active filters:</span>
+
+                {appStatusFilter !== 'all' && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/25 text-primary text-[11px] font-semibold">
+                    <span>Status: {formatApplicationStatus(appStatusFilter)}</span>
+                    <button
+                      type="button"
+                      onClick={() => setAppStatusFilter('all')}
+                      className="hover:bg-primary/20 rounded-full p-0.5 cursor-pointer"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </span>
+                )}
+
+                {appStageFilter !== 'all' && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/25 text-primary text-[11px] font-semibold">
+                    <span>Stage: {appStageFilter}</span>
+                    <button
+                      type="button"
+                      onClick={() => setAppStageFilter('all')}
+                      className="hover:bg-primary/20 rounded-full p-0.5 cursor-pointer"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </span>
+                )}
+
+                {appSectorFilter !== 'all' && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/25 text-primary text-[11px] font-semibold">
+                    <span>Sector: {appSectorFilter}</span>
+                    <button
+                      type="button"
+                      onClick={() => setAppSectorFilter('all')}
+                      className="hover:bg-primary/20 rounded-full p-0.5 cursor-pointer"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </span>
+                )}
+
+                {appDeckFilter !== 'all' && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/25 text-primary text-[11px] font-semibold">
+                    <span>Deck: {appDeckFilter === 'has_deck' ? 'Has Pitch Deck' : 'No Deck'}</span>
+                    <button
+                      type="button"
+                      onClick={() => setAppDeckFilter('all')}
+                      className="hover:bg-primary/20 rounded-full p-0.5 cursor-pointer"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </span>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleResetAllAppFilters}
+                  className="text-xs text-muted-foreground hover:text-foreground underline ml-1 font-medium cursor-pointer"
+                >
+                  Clear all
+                </button>
+              </div>
+            )}
 
             <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
               {isLoadingApplications ? (
