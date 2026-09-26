@@ -16,7 +16,7 @@ export interface IBroadcastLog {
   offeringId: string;
   offeringTitle: string;
   adminUserId: string;
-  targetAudience: "all_verified" | "commitments_only" | "interests_only";
+  targetAudience: string;
   thirdPartyUrl: string;
   subject: string;
   customMessage?: string;
@@ -70,7 +70,6 @@ const broadcastLogSchema = new Schema<IBroadcastLogDocument>(
     },
     targetAudience: {
       type: String,
-      enum: ["all_verified", "commitments_only", "interests_only"],
       required: true,
     },
     thirdPartyUrl: {
@@ -102,6 +101,9 @@ const broadcastLogSchema = new Schema<IBroadcastLogDocument>(
   { timestamps: true }
 );
 
+if (mongoose.models && mongoose.models.BroadcastLog) {
+  delete (mongoose.models as any).BroadcastLog;
+}
+
 export default (mongoose.models.BroadcastLog as Model<IBroadcastLogDocument>) ||
   mongoose.model<IBroadcastLogDocument>("BroadcastLog", broadcastLogSchema);
-

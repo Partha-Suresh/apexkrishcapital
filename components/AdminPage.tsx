@@ -36,6 +36,9 @@ import {
   Eye,
   Globe,
   RotateCcw,
+  Sparkles,
+  MessageCircle,
+  Share2,
 } from 'lucide-react'
 import {
   Select,
@@ -129,16 +132,22 @@ type BroadcastPreviewRecipient = {
   userEmail: string
   userPhone?: string | null
   hasValidPhone: boolean
+  verificationStatus?: string
   type: 'commitment' | 'interest'
   amount?: number | null
+  whatsAppLink?: string | null
 }
 
 type WhatsAppRosterItem = {
+  userId?: string
   userName: string
   userEmail: string
   userPhone: string | null
   whatsAppLink: string | null
-  emailStatus: string
+  emailStatus?: string
+  verificationStatus?: string
+  type?: 'commitment' | 'interest'
+  amount?: number | null
 }
 
 function getInitials(name: string) {
@@ -294,22 +303,18 @@ export default function AdminPage() {
   // Broadcast Modal State
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false)
   const [broadcastOffering, setBroadcastOffering] = useState<OfferingMetric | null>(null)
-  const [broadcastAudience, setBroadcastAudience] = useState<'all_verified' | 'commitments_only' | 'interests_only'>('all_verified')
+  const [broadcastAudience, setBroadcastAudience] = useState<string>('interests_only')
+  const [broadcastVerifiedOnly, setBroadcastVerifiedOnly] = useState<boolean>(false)
   const [thirdPartyUrl, setThirdPartyUrl] = useState('')
   const [broadcastSubject, setBroadcastSubject] = useState('')
   const [customMessage, setCustomMessage] = useState('')
-  const [sendEmail, setSendEmail] = useState(true)
-  const [sendWhatsApp, setSendWhatsApp] = useState(true)
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
   const [previewRecipients, setPreviewRecipients] = useState<BroadcastPreviewRecipient[]>([])
-  const [isSendingBroadcast, setIsSendingBroadcast] = useState(false)
-  const [broadcastResult, setBroadcastResult] = useState<{
-    success: boolean
-    message: string
-    emailsSent: number
-    whatsappProcessed: number
-    whatsappRoster: WhatsAppRosterItem[]
-  } | null>(null)
+  const [recipientSearchQuery, setRecipientSearchQuery] = useState('')
+  const [isSendingEmail, setIsSendingEmail] = useState(false)
+  const [emailBroadcastSuccess, setEmailBroadcastSuccess] = useState<string | null>(null)
+  const [copiedTemplate, setCopiedTemplate] = useState(false)
+  const [openedWhatsAppUsers, setOpenedWhatsAppUsers] = useState<string[]>([])
 
   // Fetch Users
   useEffect(() => {
@@ -377,22 +382,29 @@ export default function AdminPage() {
   // Open Broadcast Modal
   async function handleOpenBroadcastModal(offering: OfferingMetric) {
     setBroadcastOffering(offering)
-    setBroadcastSubject(`Allocation Available: ${offering.title}`)
+    setBroadcastSubject(`Priority Access: ${offering.title} SPV Subscription Portal`)
     setCustomMessage('')
-    setBroadcastResult(null)
+    setBroadcastAudience('interests_only')
+    setBroadcastVerifiedOnly(false)
+    setEmailBroadcastSuccess(null)
+    setCopiedTemplate(false)
+    setOpenedWhatsAppUsers([])
+    setRecipientSearchQuery('')
     setPreviewRecipients([])
     setIsBroadcastModalOpen(true)
     setIsPreviewLoading(true)
 
     try {
-      const linkRes = await fetch(`/api/admin/broadcast?offeringId=${offering.offeringId}`, { cache: 'no-store' })
+      const linkRes = await fetch(`/api/admin/broadcast?offeringId=${offering.offeringId}&audience=interests_only&verifiedOnly=false`, { cache: 'no-store' })
       const linkData = await linkRes.json()
       if (linkRes.ok && linkData.thirdPartyUrl) {
         setThirdPartyUrl(linkData.thirdPartyUrl)
       } else {
         setThirdPartyUrl('')
       }
-      await fetchBroadcastPreview(offering.offeringId, broadcastAudience)
+      if (linkRes.ok && linkData.recipients) {
+        setPreviewRecipients(linkData.recipients || [])
+      }
     } catch (err) {
       console.error('Error opening broadcast modal:', err)
     } finally {
@@ -400,11 +412,11 @@ export default function AdminPage() {
     }
   }
 
-  // Fetch preview when audience changes
-  async function fetchBroadcastPreview(offeringId: string, audience: string) {
+  // Fetch preview when audience or verification filter changes
+  async function fetchBroadcastPreview(offeringId: string, audience: string, verifiedOnly: boolean) {
     setIsPreviewLoading(true)
     try {
-      const res = await fetch(`/api/admin/broadcast?offeringId=${offeringId}&audience=${audience}`, { cache: 'no-store' })
+      const res = await fetch(`/api/admin/broadcast?offeringId=${offeringId}&audience=${audience}&verifiedOnly=${verifiedOnly}`, { cache: 'no-store' })
       const data = await res.json()
       if (res.ok) {
         setPreviewRecipients(data.recipients || [])
@@ -419,21 +431,30 @@ export default function AdminPage() {
     }
   }
 
-  function handleAudienceChange(newAudience: 'all_verified' | 'commitments_only' | 'interests_only') {
+  function handleAudienceChange(newAudience: string) {
     setBroadcastAudience(newAudience)
     if (broadcastOffering) {
-      fetchBroadcastPreview(broadcastOffering.offeringId, newAudience)
+      fetchBroadcastPreview(broadcastOffering.offeringId, newAudience, broadcastVerifiedOnly)
     }
   }
 
-  async function handleSendBroadcast() {
+  function handleVerifiedToggle(checked: boolean) {
+    setBroadcastVerifiedOnly(checked)
+    if (broadcastOffering) {
+      fetchBroadcastPreview(broadcastOffering.offeringId, broadcastAudience, checked)
+    }
+  }
+
+  // Send Email Broadcast
+  async function handleSendEmailBroadcast() {
     if (!broadcastOffering) return
     if (!thirdPartyUrl.trim()) {
-      alert('Please enter a valid third-party portal URL.')
+      alert('Please enter a valid closing portal URL.')
       return
     }
 
-    setIsSendingBroadcast(true)
+    setIsSendingEmail(true)
+    setEmailBroadcastSuccess(null)
     try {
       const res = await fetch('/api/admin/broadcast', {
         method: 'POST',
@@ -442,22 +463,47 @@ export default function AdminPage() {
           offeringId: broadcastOffering.offeringId,
           offeringTitle: broadcastOffering.title,
           targetAudience: broadcastAudience,
+          verifiedOnly: broadcastVerifiedOnly,
           thirdPartyUrl: thirdPartyUrl.trim(),
           subject: broadcastSubject.trim(),
           customMessage: customMessage.trim(),
-          sendEmail,
-          sendWhatsApp,
+          sendEmail: true,
+          sendWhatsApp: false,
+          channel: 'email',
         }),
       })
 
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to dispatch broadcast.')
-      setBroadcastResult(data)
+      if (!res.ok) throw new Error(data.error || 'Failed to dispatch email broadcast.')
+      setEmailBroadcastSuccess(`Successfully sent emails to ${data.emailsSent} investor(s)!`)
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Broadcast failed.')
+      alert(err instanceof Error ? err.message : 'Email broadcast failed.')
     } finally {
-      setIsSendingBroadcast(false)
+      setIsSendingEmail(false)
     }
+  }
+
+  function getWhatsAppBroadcastTemplate(userName?: string) {
+    if (!broadcastOffering) return ''
+    const greeting = userName ? `Dear ${userName},` : 'Hello,'
+    const custom = customMessage.trim() ? `\n\n${customMessage.trim()}` : ''
+    return `*Apex Krish Capital | Deal Subscription & Closing Portal*\n\n${greeting}\n\nYou are receiving this access link regarding your allocation/interest in *${broadcastOffering.title}*.\n\n👉 *Access Closing Portal:* ${thirdPartyUrl.trim() || '[Portal Link]'}${custom}\n\n_Confidential & Proprietary. For syndicate participants only._\nApex Krish Capital Syndicate Desk`
+  }
+
+  function handleCopyWhatsAppTemplate() {
+    const text = getWhatsAppBroadcastTemplate()
+    navigator.clipboard.writeText(text)
+    setCopiedTemplate(true)
+    setTimeout(() => setCopiedTemplate(false), 2500)
+  }
+
+  function handleOpenWhatsAppChat(recipient: BroadcastPreviewRecipient) {
+    if (!recipient.userPhone) return
+    const text = getWhatsAppBroadcastTemplate(recipient.userName)
+    const cleanPhone = recipient.userPhone.replace(/[^\d+]/g, '').replace(/^\+/, '')
+    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`
+    window.open(url, '_blank')
+    setOpenedWhatsAppUsers((prev) => (prev.includes(recipient.userId) ? prev : [...prev, recipient.userId]))
   }
 
   // Verification status change
@@ -939,41 +985,6 @@ export default function AdminPage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-xl border border-border bg-background py-2 pl-9.5 pr-3 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none"
                 />
-              </div>
-
-              <div className="w-[190px]">
-                <Select value={selectedOfferingId} onValueChange={setSelectedOfferingId}>
-                  <SelectTrigger className="h-9.5 rounded-xl text-xs font-medium">
-                    <SelectValue placeholder="All Deals" />
-                  </SelectTrigger>
-                  <SelectContent className="text-xs">
-                    <SelectItem value="all">All Deals ({offerings.length})</SelectItem>
-                    <SelectItem value="active_only">● Active Deals Only ({activeDealsCount})</SelectItem>
-                    <SelectItem value="closed_only">○ Closed Deals Only ({closedDealsCount})</SelectItem>
-                    <div className="my-1 border-t border-border" />
-                    {offerings.map((o) => {
-                      const isActive = o.status === 'active' || o.status === 'closing_soon'
-                      return (
-                        <SelectItem key={o.offeringId} value={o.offeringId}>
-                          {o.title} {isActive ? '(Active)' : '(Closed)'}
-                        </SelectItem>
-                      )
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="w-[140px]">
-                <Select value={selectedType} onValueChange={(val: any) => setSelectedType(val)}>
-                  <SelectTrigger className="h-9.5 rounded-xl text-xs font-medium">
-                    <SelectValue placeholder="All Types" />
-                  </SelectTrigger>
-                  <SelectContent className="text-xs">
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="commitment">Commitments</SelectItem>
-                    <SelectItem value="interest">Interested</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               <div className="w-[150px]">
@@ -1741,173 +1752,307 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* BROADCAST DEAL LINK MODAL */}
+        {/* BROADCAST DEAL LINK MODAL (DUAL CHANNEL: EMAIL & WHATSAPP ON SAME SCREEN) */}
         {isBroadcastModalOpen && broadcastOffering && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="w-full max-w-lg rounded-3xl border border-border bg-card text-card-foreground p-6 shadow-2xl space-y-5 font-sans">
-              <div className="flex items-center justify-between pb-3 border-b border-border">
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">
-                    Broadcast {broadcastOffering.title} Link
-                  </h3>
-                  <span className="text-xs text-muted-foreground">Notify verified investors via Email &amp; WhatsApp</span>
-                </div>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="w-full max-w-2xl rounded-3xl border border-border bg-card text-card-foreground p-6 sm:p-7 shadow-2xl space-y-5 font-sans max-h-[92vh] overflow-y-auto">
+              {/* Header */}
+              <div className="flex items-center justify-between gap-4 pb-3.5 border-b border-border">
+                <h3 className="text-xl font-bold text-foreground">
+                  Broadcast {broadcastOffering.title}
+                </h3>
+
                 <button
                   type="button"
                   onClick={() => setIsBroadcastModalOpen(false)}
-                  className="rounded-full p-1.5 text-muted-foreground hover:bg-muted cursor-pointer"
+                  className="rounded-full p-2 text-muted-foreground hover:bg-muted cursor-pointer transition"
                 >
-                  <X className="size-4" />
+                  <X className="size-5" />
                 </button>
               </div>
 
-              {broadcastResult ? (
-                <div className="space-y-4">
-                  <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center space-y-1">
-                    <CheckCheck className="size-6 text-emerald-500 mx-auto" />
-                    <p className="text-sm font-bold text-emerald-950 dark:text-emerald-200">Broadcast Dispatched!</p>
-                    <p className="text-xs text-emerald-800 dark:text-emerald-300">
-                      Sent {broadcastResult.emailsSent} emails • Prepared {broadcastResult.whatsappProcessed} WhatsApp links.
-                    </p>
-                  </div>
+              {/* Target Audience Selection */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Target Audience
+                </label>
 
-                  {broadcastResult.whatsappRoster && broadcastResult.whatsappRoster.length > 0 && (
-                    <div className="max-h-48 overflow-y-auto divide-y divide-border rounded-xl border border-border">
-                      {broadcastResult.whatsappRoster.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 text-xs">
-                          <div>
-                            <p className="font-semibold text-foreground text-sm">{item.userName}</p>
-                            <p className="text-xs text-muted-foreground">{item.userPhone || item.userEmail}</p>
-                          </div>
-                          {item.whatsAppLink && (
-                            <a
-                              href={item.whatsAppLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold text-xs hover:bg-emerald-700 flex items-center gap-1.5"
-                            >
-                              <MessageSquare className="size-3.5" /> Chat
-                            </a>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => handleAudienceChange('interests_only')}
+                    className={cn(
+                      'py-2.5 px-3 rounded-xl border text-center font-semibold transition cursor-pointer text-xs',
+                      broadcastAudience === 'interests_only'
+                        ? 'border-primary bg-primary/10 text-primary shadow-xs'
+                        : 'border-border bg-muted/30 text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    All Interested
+                  </button>
 
-                  <Button onClick={() => setIsBroadcastModalOpen(false)} className="w-full rounded-xl text-xs font-semibold h-10">
-                    Done
-                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => handleAudienceChange('commitments_only')}
+                    className={cn(
+                      'py-2.5 px-3 rounded-xl border text-center font-semibold transition cursor-pointer text-xs',
+                      broadcastAudience === 'commitments_only'
+                        ? 'border-primary bg-primary/10 text-primary shadow-xs'
+                        : 'border-border bg-muted/30 text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Committed LPs
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleAudienceChange('all_deal_lps')}
+                    className={cn(
+                      'py-2.5 px-3 rounded-xl border text-center font-semibold transition cursor-pointer text-xs',
+                      broadcastAudience === 'all_deal_lps'
+                        ? 'border-primary bg-primary/10 text-primary shadow-xs'
+                        : 'border-border bg-muted/30 text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    All Deal LPs
+                  </button>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      Target Audience
-                    </label>
-                    <div className="grid grid-cols-3 gap-2.5 text-xs">
-                      <button
-                        type="button"
-                        onClick={() => handleAudienceChange('all_verified')}
-                        className={cn(
-                          'p-2.5 rounded-xl border text-center font-medium transition cursor-pointer',
-                          broadcastAudience === 'all_verified'
-                            ? 'border-primary bg-primary/10 text-primary font-bold'
-                            : 'border-border bg-muted/40 text-muted-foreground'
-                        )}
-                      >
-                        All Verified
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleAudienceChange('commitments_only')}
-                        className={cn(
-                          'p-2.5 rounded-xl border text-center font-medium transition cursor-pointer',
-                          broadcastAudience === 'commitments_only'
-                            ? 'border-primary bg-primary/10 text-primary font-bold'
-                            : 'border-border bg-muted/40 text-muted-foreground'
-                        )}
-                      >
-                        Commitments
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleAudienceChange('interests_only')}
-                        className={cn(
-                          'p-2.5 rounded-xl border text-center font-medium transition cursor-pointer',
-                          broadcastAudience === 'interests_only'
-                            ? 'border-primary bg-primary/10 text-primary font-bold'
-                            : 'border-border bg-muted/40 text-muted-foreground'
-                        )}
-                      >
-                        Interested
-                      </button>
-                    </div>
-                  </div>
+              </div>
 
+              {/* Deal Link & Message Details */}
+              <div className="space-y-3 pt-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      Third-Party Closing / Portal URL
+                    <label className="text-[11px] font-semibold text-muted-foreground flex items-center justify-between">
+                      <span>Third-Party Closing / Portal URL *</span>
+                      {thirdPartyUrl.trim().startsWith('http') && (
+                        <a
+                          href={thirdPartyUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline flex items-center gap-1 text-[10px]"
+                        >
+                          Test Link <ExternalLink className="size-2.5" />
+                        </a>
+                      )}
                     </label>
                     <input
                       type="url"
-                      placeholder="https://app.carta.com/spvs/..."
+                      placeholder="https://app.carta.com/spvs/... or https://assure.co/..."
                       value={thirdPartyUrl}
                       onChange={(e) => setThirdPartyUrl(e.target.value)}
-                      className="w-full rounded-xl border border-border bg-background py-2 px-3 text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                      className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      Note from Admin (Optional)
+                    <label className="text-[11px] font-semibold text-muted-foreground">
+                      Email Subject Line
                     </label>
-                    <textarea
-                      rows={2}
-                      placeholder="e.g. Please sign subscription documents before closing."
-                      value={customMessage}
-                      onChange={(e) => setCustomMessage(e.target.value)}
-                      className="w-full rounded-xl border border-border bg-background p-2.5 text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                    <input
+                      type="text"
+                      placeholder="Subject line for email..."
+                      value={broadcastSubject}
+                      onChange={(e) => setBroadcastSubject(e.target.value)}
+                      className="w-full rounded-xl border border-border bg-background py-2.5 px-3.5 text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none"
                     />
                   </div>
+                </div>
 
-                  <div className="rounded-xl border border-border bg-muted/20 p-3 text-xs flex items-center justify-between">
-                    <span className="text-muted-foreground font-medium">Verified Recipients:</span>
-                    <strong className="text-foreground font-semibold">
-                      {isPreviewLoading ? 'Loading...' : `${previewRecipients.length} Verified Investor(s)`}
-                    </strong>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-semibold text-muted-foreground">
+                    Custom Note / Special Instructions
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="e.g. Allocation window closes Friday at 5 PM EST. Please wire funds promptly."
+                    value={customMessage}
+                    onChange={(e) => setCustomMessage(e.target.value)}
+                    className="w-full rounded-xl border border-border bg-background p-3 text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* DUAL-CHANNEL BROADCAST DISPATCH HUBS (SAME SCREEN) */}
+              <div className="space-y-2 pt-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Dispatch Channels
+                </label>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* Channel Option A: Email Broadcast */}
+                  <div className="rounded-2xl border border-border bg-muted/20 p-4 flex flex-col justify-between gap-3 shadow-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                        <Mail className="size-4" />
+                      </div>
+                      <h4 className="font-bold text-sm text-foreground">Email Broadcast</h4>
+                    </div>
+
+                    {emailBroadcastSuccess && (
+                      <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2">
+                        <CheckCheck className="size-4 shrink-0" />
+                        <span>{emailBroadcastSuccess}</span>
+                      </div>
+                    )}
+
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleSendEmailBroadcast}
+                      disabled={isSendingEmail || previewRecipients.filter(r => !!r.userEmail).length === 0 || !thirdPartyUrl.trim() || isPreviewLoading}
+                      className="w-full rounded-xl text-xs font-semibold gap-2 h-9.5 bg-foreground text-background hover:bg-foreground/90 transition shadow-xs"
+                    >
+                      {isSendingEmail ? (
+                        <>
+                          <Loader2 className="size-3.5 animate-spin" />
+                          <span>Sending Emails...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="size-3.5" />
+                          <span>Send Email Broadcast ({previewRecipients.filter(r => !!r.userEmail).length})</span>
+                        </>
+                      )}
+                    </Button>
                   </div>
 
-                  <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border">
+                  {/* Channel Option B: WhatsApp Broadcast */}
+                  <div className="rounded-2xl border border-border bg-muted/20 p-4 flex flex-col justify-between gap-3 shadow-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                        <MessageCircle className="size-4" />
+                      </div>
+                      <h4 className="font-bold text-sm text-foreground">WhatsApp Broadcast</h4>
+                    </div>
+
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setIsBroadcastModalOpen(false)}
-                      className="rounded-xl text-xs h-9"
-                      disabled={isSendingBroadcast}
+                      onClick={handleCopyWhatsAppTemplate}
+                      disabled={!thirdPartyUrl.trim()}
+                      className="w-full rounded-xl text-xs font-semibold gap-1.5 h-9.5 border-border"
                     >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={handleSendBroadcast}
-                      disabled={isSendingBroadcast || !thirdPartyUrl.trim() || previewRecipients.length === 0}
-                      className="rounded-xl text-xs font-semibold gap-1.5 px-4 h-9 bg-foreground text-background hover:bg-foreground/90"
-                    >
-                      {isSendingBroadcast ? (
+                      {copiedTemplate ? (
                         <>
-                          <Loader2 className="size-3.5 animate-spin" /> Sending...
+                          <Check className="size-3.5 text-emerald-500" />
+                          <span className="text-emerald-600 dark:text-emerald-400">Copied Template!</span>
                         </>
                       ) : (
                         <>
-                          <Send className="size-3.5" /> Send ({previewRecipients.length})
+                          <Copy className="size-3.5" />
+                          <span>Copy WhatsApp Template</span>
                         </>
                       )}
                     </Button>
                   </div>
                 </div>
-              )}
+              </div>
+
+              {/* Interactive Recipient & 1-Click WhatsApp Direct Chat Roster */}
+              <div className="space-y-2.5 pt-1">
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                    Investor Roster ({previewRecipients.length})
+                  </h4>
+
+                  <div className="relative w-48">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3 text-muted-foreground" />
+                    <input
+                      type="text"
+                      placeholder="Search..."
+                      value={recipientSearchQuery}
+                      onChange={(e) => setRecipientSearchQuery(e.target.value)}
+                      className="w-full rounded-xl border border-border bg-background py-1 pl-8 pr-2.5 text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {isPreviewLoading ? (
+                  <div className="rounded-2xl border border-border p-6 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
+                    <Loader2 className="size-4 animate-spin text-primary" />
+                    <span>Loading target investors...</span>
+                  </div>
+                ) : previewRecipients.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
+                    No investors found matching the selected audience.
+                  </div>
+                ) : (
+                  <div className="max-h-52 overflow-y-auto rounded-2xl border border-border divide-y divide-border/60 text-xs">
+                    {previewRecipients
+                      .filter((r) => {
+                        if (!recipientSearchQuery.trim()) return true
+                        const q = recipientSearchQuery.trim().toLowerCase()
+                        return (
+                          r.userName.toLowerCase().includes(q) ||
+                          r.userEmail.toLowerCase().includes(q) ||
+                          (r.userPhone && r.userPhone.toLowerCase().includes(q))
+                        )
+                      })
+                      .map((recipient) => {
+                        const isOpened = openedWhatsAppUsers.includes(recipient.userId)
+
+                        return (
+                          <div
+                            key={recipient.userId}
+                            className="p-3 flex items-center justify-between gap-3 hover:bg-muted/20 transition-colors"
+                          >
+                            <span className="font-semibold text-foreground text-sm truncate">
+                              {recipient.userName}
+                            </span>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              {recipient.hasValidPhone ? (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  onClick={() => handleOpenWhatsAppChat(recipient)}
+                                  className={cn(
+                                    'h-8 rounded-xl text-xs font-semibold gap-1.5 px-3 transition cursor-pointer',
+                                    isOpened
+                                      ? 'bg-emerald-600/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600/25'
+                                      : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                                  )}
+                                >
+                                  {isOpened ? (
+                                    <>
+                                      <Check className="size-3.5 text-emerald-500" />
+                                      <span>Chat Opened</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <MessageSquare className="size-3.5" />
+                                      <span>Chat on WhatsApp</span>
+                                      <ExternalLink className="size-3" />
+                                    </>
+                                  )}
+                                </Button>
+                              ) : (
+                                <span className="text-[11px] text-muted-foreground italic px-2 py-1 rounded-lg bg-muted/40">
+                                  No phone
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsBroadcastModalOpen(false)}
+                  className="rounded-xl text-xs h-9 px-5"
+                >
+                  Close
+                </Button>
+              </div>
             </div>
           </div>
         )}

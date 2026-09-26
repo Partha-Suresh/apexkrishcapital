@@ -4,6 +4,7 @@ import { dbConnect } from "@/lib/dbConnect";
 import Commitment from "@/models/commitment.model";
 import DealLink from "@/models/deal-link.model";
 import BroadcastLog, { IBroadcastRecipient } from "@/models/broadcast-log.model";
+import User from "@/models/user.model";
 import {
   sendBroadcastEmail,
   generateWhatsAppLink,
@@ -23,7 +24,8 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const offeringId = searchParams.get("offeringId");
-  const audience = searchParams.get("audience") || "all_verified";
+  const audience = searchParams.get("audience") || "interests_only";
+  const verifiedOnly = searchParams.get("verifiedOnly") === "true";
 
   if (!offeringId) {
     return NextResponse.json(
@@ -37,50 +39,104 @@ export async function GET(req: NextRequest) {
 
     // Fetch stored deal link
     const dealLink = await DealLink.findOne({ offeringId }).lean();
+    const currentUrl = dealLink?.thirdPartyUrl || "";
 
-    // Query commitments and populate user verification
-    const records = await Commitment.find({
-      offeringId,
-      status: { $ne: "cancelled" },
-    })
-      .populate("userId", "name email phoneNumber verificationStatus investorStatus citizenship")
-      .lean();
-
-    // Filter strictly for verified investors
-    const verifiedRecords = records.filter((r: any) => {
-      const user = r.userId || {};
-      return user.verificationStatus === "verified";
-    });
-
-    // Apply audience filter
-    const audienceFiltered = verifiedRecords.filter((r: any) => {
-      if (audience === "commitments_only") return r.type === "commitment";
-      if (audience === "interests_only") return r.type === "interest";
-      return true;
-    });
-
-    // Deduplicate by user ID (take largest amount if multiple exist)
     const userMap = new Map<string, any>();
-    audienceFiltered.forEach((r: any) => {
-      const u = r.userId || {};
-      const uId = u._id ? u._id.toString() : r.userId?.toString();
-      if (!uId) return;
 
-      const existing = userMap.get(uId);
-      if (!existing || (r.amount && (!existing.amount || r.amount > existing.amount))) {
+    if (audience === "all_platform_investors") {
+      // Query all users from User collection
+      const allUsers = await User.find({ role: "user" })
+        .select("name email phoneNumber verificationStatus investorStatus citizenship")
+        .lean();
+
+      allUsers.forEach((u: any) => {
+        if (verifiedOnly && u.verificationStatus !== "verified") return;
+        const uId = u._id ? u._id.toString() : u.id;
+        if (!uId) return;
+
+        const phone = u.phoneNumber || null;
+        const hasValidPhone = !!cleanPhoneNumber(phone);
+        const userName = u.name || "Investor";
+
         userMap.set(uId, {
           userId: uId,
-          userName: r.userName || u.name || "Verified Investor",
-          userEmail: r.userEmail || u.email,
-          userPhone: u.phoneNumber || null,
-          hasValidPhone: !!cleanPhoneNumber(u.phoneNumber),
-          type: r.type,
-          amount: r.amount || null,
-          offeringId: r.offeringId,
-          offeringTitle: r.offeringTitle,
+          userName,
+          userEmail: u.email,
+          userPhone: phone,
+          hasValidPhone,
+          verificationStatus: u.verificationStatus || "pending verification",
+          type: "interest",
+          amount: null,
+          offeringId,
+          offeringTitle: offeringId,
+          whatsAppLink: hasValidPhone
+            ? generateWhatsAppLink(phone, {
+                userName,
+                offeringTitle: offeringId,
+                thirdPartyUrl: currentUrl,
+              })
+            : null,
         });
-      }
-    });
+      });
+    } else {
+      // Query commitments and populate user profile
+      const records = await Commitment.find({
+        offeringId,
+        status: { $ne: "cancelled" },
+      })
+        .populate("userId", "name email phoneNumber verificationStatus investorStatus citizenship")
+        .lean();
+
+      // Apply verified filter if enabled
+      const filteredByVerification = verifiedOnly
+        ? records.filter((r: any) => {
+            const user = r.userId || {};
+            return user.verificationStatus === "verified";
+          })
+        : records;
+
+      // Apply audience filter
+      const audienceFiltered = filteredByVerification.filter((r: any) => {
+        if (audience === "commitments_only") return r.type === "commitment";
+        if (audience === "interests_only" || audience === "all_interested") return r.type === "interest";
+        // 'all_deal_lps' or 'all_verified' includes both commitment & interest
+        return true;
+      });
+
+      // Deduplicate by user ID
+      audienceFiltered.forEach((r: any) => {
+        const u = r.userId || {};
+        const uId = u._id ? u._id.toString() : r.userId?.toString();
+        if (!uId) return;
+
+        const existing = userMap.get(uId);
+        if (!existing || (r.amount && (!existing.amount || r.amount > existing.amount))) {
+          const phone = u.phoneNumber || r.userPhone || null;
+          const hasValidPhone = !!cleanPhoneNumber(phone);
+          const userName = r.userName || u.name || "Investor";
+
+          userMap.set(uId, {
+            userId: uId,
+            userName,
+            userEmail: r.userEmail || u.email,
+            userPhone: phone,
+            hasValidPhone,
+            verificationStatus: u.verificationStatus || "pending verification",
+            type: r.type,
+            amount: r.amount || null,
+            offeringId: r.offeringId,
+            offeringTitle: r.offeringTitle,
+            whatsAppLink: hasValidPhone
+              ? generateWhatsAppLink(phone, {
+                  userName,
+                  offeringTitle: r.offeringTitle || offeringId,
+                  thirdPartyUrl: currentUrl,
+                })
+              : null,
+          });
+        }
+      });
+    }
 
     const recipients = Array.from(userMap.values());
 
@@ -88,7 +144,8 @@ export async function GET(req: NextRequest) {
       offeringId,
       thirdPartyUrl: dealLink?.thirdPartyUrl || "",
       instructions: dealLink?.instructions || "",
-      totalVerifiedRecipients: recipients.length,
+      totalRecipients: recipients.length,
+      recipientsWithEmail: recipients.filter((r) => !!r.userEmail).length,
       recipientsWithPhone: recipients.filter((r) => r.hasValidPhone).length,
       recipients,
     });
@@ -117,13 +174,18 @@ export async function POST(req: NextRequest) {
     const {
       offeringId,
       offeringTitle,
-      targetAudience = "all_verified",
+      targetAudience = "interests_only",
+      verifiedOnly = false,
       thirdPartyUrl,
       subject,
       customMessage = "",
-      sendEmail = true,
-      sendWhatsApp = true,
+      sendEmail = false,
+      sendWhatsApp = false,
+      channel, // 'email' | 'whatsapp' | 'both'
     } = body;
+
+    const shouldSendEmail = channel === "email" || channel === "both" || sendEmail === true;
+    const shouldSendWhatsApp = channel === "whatsapp" || channel === "both" || sendWhatsApp === true;
 
     if (!offeringId || !thirdPartyUrl) {
       return NextResponse.json(
@@ -154,46 +216,72 @@ export async function POST(req: NextRequest) {
       { upsert: true }
     );
 
-    // Fetch all commitments for this offering
-    const records = await Commitment.find({
-      offeringId,
-      status: { $ne: "cancelled" },
-    })
-      .populate("userId", "name email phoneNumber verificationStatus investorStatus citizenship")
-      .lean();
-
-    // Filter strictly for verified investors
-    const verifiedRecords = records.filter((r: any) => {
-      const user = r.userId || {};
-      return user.verificationStatus === "verified";
-    });
-
-    // Apply audience filter
-    const audienceFiltered = verifiedRecords.filter((r: any) => {
-      if (targetAudience === "commitments_only") return r.type === "commitment";
-      if (targetAudience === "interests_only") return r.type === "interest";
-      return true;
-    });
-
-    // Deduplicate by user ID
     const userMap = new Map<string, any>();
-    audienceFiltered.forEach((r: any) => {
-      const u = r.userId || {};
-      const uId = u._id ? u._id.toString() : r.userId?.toString();
-      if (!uId) return;
 
-      const existing = userMap.get(uId);
-      if (!existing || (r.amount && (!existing.amount || r.amount > existing.amount))) {
+    if (targetAudience === "all_platform_investors") {
+      const allUsers = await User.find({ role: "user" })
+        .select("name email phoneNumber verificationStatus investorStatus citizenship")
+        .lean();
+
+      allUsers.forEach((u: any) => {
+        if (verifiedOnly && u.verificationStatus !== "verified") return;
+        const uId = u._id ? u._id.toString() : u.id;
+        if (!uId) return;
+
         userMap.set(uId, {
           userId: uId,
-          userName: r.userName || u.name || "Verified Investor",
-          userEmail: r.userEmail || u.email,
+          userName: u.name || "Investor",
+          userEmail: u.email,
           userPhone: u.phoneNumber || null,
-          type: r.type,
-          amount: r.amount || null,
+          verificationStatus: u.verificationStatus || "pending verification",
+          type: "interest",
+          amount: null,
         });
-      }
-    });
+      });
+    } else {
+      // Fetch commitments for this offering
+      const records = await Commitment.find({
+        offeringId,
+        status: { $ne: "cancelled" },
+      })
+        .populate("userId", "name email phoneNumber verificationStatus investorStatus citizenship")
+        .lean();
+
+      // Apply verification filter if requested
+      const filteredByVerification = verifiedOnly
+        ? records.filter((r: any) => {
+            const user = r.userId || {};
+            return user.verificationStatus === "verified";
+          })
+        : records;
+
+      // Apply audience filter
+      const audienceFiltered = filteredByVerification.filter((r: any) => {
+        if (targetAudience === "commitments_only") return r.type === "commitment";
+        if (targetAudience === "interests_only" || targetAudience === "all_interested") return r.type === "interest";
+        return true;
+      });
+
+      // Deduplicate by user ID
+      audienceFiltered.forEach((r: any) => {
+        const u = r.userId || {};
+        const uId = u._id ? u._id.toString() : r.userId?.toString();
+        if (!uId) return;
+
+        const existing = userMap.get(uId);
+        if (!existing || (r.amount && (!existing.amount || r.amount > existing.amount))) {
+          userMap.set(uId, {
+            userId: uId,
+            userName: r.userName || u.name || "Investor",
+            userEmail: r.userEmail || u.email,
+            userPhone: u.phoneNumber || r.userPhone || null,
+            verificationStatus: u.verificationStatus || "pending verification",
+            type: r.type,
+            amount: r.amount || null,
+          });
+        }
+      });
+    }
 
     const uniqueRecipients = Array.from(userMap.values());
 
@@ -201,7 +289,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "No verified investors found who have committed capital or expressed interest in this offering.",
+            "No investors found matching the selected target audience criteria.",
         },
         { status: 400 }
       );
@@ -213,25 +301,29 @@ export async function POST(req: NextRequest) {
 
     const broadcastResults: IBroadcastRecipient[] = [];
     const whatsappRoster: Array<{
+      userId: string;
       userName: string;
       userEmail: string;
       userPhone: string | null;
       whatsAppLink: string | null;
       emailStatus: string;
+      verificationStatus: string;
+      type: "commitment" | "interest";
+      amount: number | null;
     }> = [];
 
     let emailsSent = 0;
     let whatsappProcessed = 0;
 
-    // Process each verified investor
+    // Process each target investor
     for (const recipient of uniqueRecipients) {
       let emailStatus: "sent" | "failed" | "skipped" = "skipped";
       let whatsappStatus: "sent" | "link_generated" | "failed" | "skipped" = "skipped";
       let errorMsg: string | undefined;
       let whatsAppLink: string | null = null;
 
-      // 1. Send Email
-      if (sendEmail && recipient.userEmail) {
+      // 1. Send Email (if enabled)
+      if (shouldSendEmail && recipient.userEmail) {
         const emailRes = await sendBroadcastEmail({
           to: recipient.userEmail,
           userName: recipient.userName,
@@ -252,8 +344,8 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // 2. Process WhatsApp
-      if (sendWhatsApp && recipient.userPhone) {
+      // 2. Generate WhatsApp Link (always generated for phone holders so admin can use immediately on screen)
+      if (recipient.userPhone) {
         whatsAppLink = generateWhatsAppLink(recipient.userPhone, {
           userName: recipient.userName,
           offeringTitle: offeringTitle || offeringId,
@@ -263,7 +355,9 @@ export async function POST(req: NextRequest) {
 
         if (whatsAppLink) {
           whatsappStatus = "link_generated";
-          whatsappProcessed += 1;
+          if (shouldSendWhatsApp) {
+            whatsappProcessed += 1;
+          }
         }
       }
 
@@ -280,11 +374,15 @@ export async function POST(req: NextRequest) {
       });
 
       whatsappRoster.push({
+        userId: recipient.userId,
         userName: recipient.userName,
         userEmail: recipient.userEmail,
         userPhone: recipient.userPhone,
         whatsAppLink,
         emailStatus,
+        verificationStatus: recipient.verificationStatus,
+        type: recipient.type,
+        amount: recipient.amount,
       });
     }
 
@@ -299,16 +397,25 @@ export async function POST(req: NextRequest) {
       customMessage,
       totalRecipients: uniqueRecipients.length,
       emailsSent,
-      whatsappProcessed,
+      whatsappProcessed: shouldSendWhatsApp ? whatsappProcessed : 0,
       recipients: broadcastResults,
     });
 
+    let message = "";
+    if (shouldSendEmail && shouldSendWhatsApp) {
+      message = `Dispatched ${emailsSent} emails and prepared ${whatsappRoster.filter(w => !!w.whatsAppLink).length} WhatsApp links.`;
+    } else if (shouldSendEmail) {
+      message = `Dispatched ${emailsSent} email broadcast(s) successfully.`;
+    } else {
+      message = `Generated WhatsApp links for ${whatsappRoster.filter(w => !!w.whatsAppLink).length} investor(s).`;
+    }
+
     return NextResponse.json({
       success: true,
-      message: `Broadcast successfully dispatched to ${uniqueRecipients.length} verified investor(s).`,
+      message,
       totalRecipients: uniqueRecipients.length,
       emailsSent,
-      whatsappProcessed,
+      whatsappProcessed: whatsappRoster.filter(w => !!w.whatsAppLink).length,
       whatsappRoster,
     });
   } catch (error: any) {
@@ -319,4 +426,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
